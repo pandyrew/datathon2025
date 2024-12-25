@@ -3,33 +3,10 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import Image from "next/image";
-
-const PAST_SPONSORS = [
-  {
-    name: "Sponsor 1",
-    logo: "/sponsors/placeholder.png",
-  },
-  {
-    name: "Sponsor 2",
-    logo: "/sponsors/placeholder.png",
-  },
-  {
-    name: "Sponsor 3",
-    logo: "/sponsors/placeholder.png",
-  },
-  {
-    name: "Sponsor 4",
-    logo: "/sponsors/placeholder.png",
-  },
-  // Add more sponsors as needed
-];
 
 export default function Sponsors() {
   const ref = useRef(null);
-  const logosRef = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const areLogosInView = useInView(logosRef, { once: true, margin: "-100px" });
 
   return (
     <section id="sponsors" className="min-h-[500px] bg-white py-32 px-6">
