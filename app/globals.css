@@ -1,5 +1,7 @@
 @import url("https://api.fontshare.com/v2/css?f[]=dancing-script@1&display=swap");
 @import url("https://api.fontshare.com/v2/css?f[]=sentient@1&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=chillax@1&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=outfit@1&display=swap");
 
 @tailwind base;
 @tailwind base;
@@ -12,5 +14,11 @@
   }
   .font-sentient {
     font-family: "Sentient", sans-serif;
+  }
+  .font-chillax {
+    font-family: "Chillax", sans-serif;
+  }
+  .font-outfit {
+    font-family: "Outfit", sans-serif;
   }
 }
