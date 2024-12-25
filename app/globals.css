@@ -1,21 +1,16 @@
+@import url("https://api.fontshare.com/v2/css?f[]=dancing-script@1&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=sentient@1&display=swap");
+
+@tailwind base;
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer utilities {
+  .font-dancing {
+    font-family: "Dancing Script", cursive;
   }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  .font-sentient {
+    font-family: "Sentient", sans-serif;
+  }
 }
