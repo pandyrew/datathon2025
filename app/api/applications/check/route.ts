@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getConnection } from "@/app/lib/db/drizzle";
-import { participantApplications, judgeApplications, students } from "@/app/lib/db/schema";
+import { participantApplications, judgeApplications, students, mentorApplications } from "@/app/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET() {
@@ -39,7 +39,23 @@ export async function GET() {
       .where(eq(judgeApplications.studentId, studentId))
       .limit(1);
 
-    const hasApplication = participantApp.length > 0 || judgeApp.length > 0;
+    const mentorApp = await db
+      .select({ id: mentorApplications.id })
+      .from(mentorApplications)
+      .where(eq(mentorApplications.studentId, studentId))
+      .limit(1);
+
+    const coordinatorApp = await db
+      .select({ id: coordinatorApplications.id })
+      .from(coordinatorApplications)
+      .where(eq(coordinatorApplications.studentId, studentId))
+      .limit(1);
+
+    const hasApplication =
+      participantApp.length > 0 ||
+      judgeApp.length > 0 ||
+      mentorApp.length > 0 ||
+      coordinatorApp.length > 0;
 
     return NextResponse.json({ hasApplication });
   } catch (error) {

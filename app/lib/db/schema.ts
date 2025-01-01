@@ -96,6 +96,7 @@ export const judgeApplications = pgTable("judge_applications", {
   websiteUrl: text("website_url"),
 });
 
+
 // You can keep these if needed for other functionality
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),

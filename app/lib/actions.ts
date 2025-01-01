@@ -6,6 +6,7 @@ import {
   participantApplications,
   judgeApplications,
   students,
+  mentorApplications,
 } from "./db/schema";
 
 type ParticipantStepData = {
@@ -94,8 +95,15 @@ export async function updateApplicationData(
       .where(eq(participantApplications.id, applicationId))
       .limit(1);
 
+    const mentorApp = await db
+      .select()
+      .from(mentorApplications)
+      .where(eq(mentorApplications.id, applicationId))
+      .limit(1);
+
     const isParticipant = participantApp.length > 0;
-    let updateData: Record<string, string | number | boolean> = {};
+    const isMentor = mentorApp.length > 0;
+    let updateData: Record<string, string | number | boolean | string[]> = {};
 
     if (isParticipant) {
       const stepNumber = parseInt(step);
@@ -142,6 +150,54 @@ export async function updateApplicationData(
           updatedAt: new Date(),
         })
         .where(eq(participantApplications.id, applicationId))
+        .returning();
+
+      return { success: true, data: updated };
+    } else if (isMentor) {
+      const stepNumber = parseInt(step);
+      const stepKey = stepNumber.toString();
+
+      switch (stepKey) {
+        case "1":
+          updateData = {
+            fullName: data.get("fullName") as string,
+            pronouns: data.get("pronouns") as string,
+            pronounsOther: data.get("pronounsOther") as string,
+            affiliation: data.get("affiliation") as string,
+          };
+          break;
+
+        case "2":
+          updateData = {
+            programmingLanguages: data.getAll(
+              "programmingLanguages"
+            ) as string[],
+            comfortLevel: Number(data.get("comfortLevel")),
+            hasHackathonExperience:
+              data.get("hasHackathonExperience") === "true",
+            motivation: data.get("motivation") as string,
+            mentorRoleDescription: data.get("mentorRoleDescription") as string,
+            availability: data.get("availability") as string,
+          };
+          break;
+
+        case "3":
+          updateData = {
+            linkedinUrl: data.get("linkedin") as string,
+            githubUrl: data.get("github") as string,
+            websiteUrl: data.get("website") as string,
+            dietaryRestrictions: data.getAll("dietaryRestrictions") as string[],
+          };
+          break;
+      }
+
+      const [updated] = await db
+        .update(mentorApplications)
+        .set({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+        .where(eq(mentorApplications.id, applicationId))
         .returning();
 
       return { success: true, data: updated };
@@ -241,6 +297,16 @@ export async function submitApplication(studentId: string) {
         .where(eq(judgeApplications.studentId, studentId))
         .returning();
 
+      return { success: true, data: updated };
+    } else if (student.role === "mentor") {
+      const [updated] = await db
+        .update(mentorApplications)
+        .set({
+          status: "submitted",
+          updatedAt: new Date(),
+        })
+        .where(eq(mentorApplications.studentId, studentId))
+        .returning();
       return { success: true, data: updated };
     }
 

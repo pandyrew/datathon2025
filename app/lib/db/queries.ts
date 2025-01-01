@@ -102,35 +102,38 @@ export async function getApplicationByStudentId(
 export async function updateApplication(
   studentId: string,
   role: string,
-  data: Partial<ParticipantApplication | JudgeApplication>
+  data: Partial<ParticipantApplication | JudgeApplication | MentorApplication>
 ) {
   const db = await getConnection();
 
   if (role === "participant") {
+    const participantData = data as Partial<ParticipantApplication>;
     const result = await db
       .update(participantApplications)
       .set({
-        ...data,
+        ...participantData,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where(eq(participantApplications.studentId, studentId))
       .returning();
     return result[0];
   } else if (role === "judge") {
+    const judgeData = data as Partial<JudgeApplication>;
     const result = await db
       .update(judgeApplications)
       .set({
-        ...data,
+        ...judgeData,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where(eq(judgeApplications.studentId, studentId))
       .returning();
     return result[0];
   } else if (role === "mentor") {
+    const mentorData = data as Partial<MentorApplication>;
     const result = await db
       .update(mentorApplications)
       .set({
-        ...data,
+        ...mentorData,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where(eq(mentorApplications.studentId, studentId))
