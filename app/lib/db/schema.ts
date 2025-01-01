@@ -16,7 +16,7 @@ export const students = pgTable("students", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   teamId: uuid("team_id").references(() => teams.id),
-  role: text("role").default("participant").notNull(),
+  role: text("role"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -41,6 +41,24 @@ const commonFields = {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 };
+
+// For storing mentor applications
+export const mentorApplications = pgTable("mentor_applications", {
+  ...commonFields,
+  pronouns: varchar("pronouns", { length: 20 }),
+  pronounsOther: text("pronouns_other"),
+  affiliation: text("affiliation"),
+  programmingLanguages: text("programming_languages").array(),
+  comfortLevel: integer("comfort_level"),
+  hasHackathonExperience: boolean("has_hackathon_experience"),
+  motivation: text("motivation"),
+  mentorRoleDescription: text("mentor_role_description"),
+  availability: text("availability"),
+  linkedinUrl: text("linkedin_url"),
+  githubUrl: text("github_url"),
+  websiteUrl: text("website_url"),
+  dietaryRestrictions: text("dietary_restrictions").array(),
+});
 
 // For storing participant applications
 export const participantApplications = pgTable("participant_applications", {

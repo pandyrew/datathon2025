@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { getConnection } from "@/app/lib/db/drizzle";
-import { students, participantApplications } from "@/app/lib/db/schema";
+import { students } from "@/app/lib/db/schema";
 import { Webhook } from "svix";
 
 export async function POST(req: Request) {
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   }
 
   // Get the headers
-  const headersList = await headers();
+  const headersList = headers();
   const svix_id = headersList.get("svix-id");
   const svix_timestamp = headersList.get("svix-timestamp");
   const svix_signature = headersList.get("svix-signature");
@@ -23,9 +23,8 @@ export async function POST(req: Request) {
     });
   }
 
-  // Get the body
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
+  // Get the raw body
+  const rawBody = await req.text();
 
   // Create a new Svix instance with your secret
   const wh = new Webhook(WEBHOOK_SECRET);
@@ -33,46 +32,38 @@ export async function POST(req: Request) {
   let evt: WebhookEvent;
 
   try {
-    evt = wh.verify(body, {
+    evt = wh.verify(rawBody, {
       "svix-id": svix_id,
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
     }) as WebhookEvent;
   } catch (err) {
-    console.log(err);
+    console.error("Webhook verification failed:", err);
     return new Response("Error occured", {
       status: 400,
     });
   }
 
+  // Parse the raw body as JSON
+  const payload = JSON.parse(rawBody);
+
   // Handle the webhook
   const eventType = evt.type;
   if (eventType === "user.created") {
-    const { id, email_addresses, first_name, last_name } = evt.data;
+    const { id, email_addresses, first_name, last_name } = payload.data;
     const db = await getConnection();
 
     try {
-      // Create student record
-      const [student] = await db
-        .insert(students)
-        .values({
-          userId: id,
-          email: email_addresses[0].email_address,
-          firstName: first_name || "",
-          lastName: last_name || "",
-          role: "participant", // Default role
-        })
-        .returning();
-
-      // Create initial participant application
-      await db.insert(participantApplications).values({
-        studentId: student.id,
-        status: "draft",
-        fullName: `${first_name || ""} ${last_name || ""}`.trim(),
+      // Create student record without a default role
+      await db.insert(students).values({
+        userId: id,
+        email: email_addresses[0].email_address,
+        firstName: first_name || "",
+        lastName: last_name || "",
       });
     } catch (error) {
-      console.error("Error creating student and application:", error);
-      return new Response("Error creating records", { status: 500 });
+      console.error("Error creating student record:", error);
+      return new Response("Error creating record", { status: 500 });
     }
   }
 

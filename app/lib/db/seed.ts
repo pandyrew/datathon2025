@@ -101,7 +101,7 @@ async function main() {
           "first_name" text NOT NULL,
           "last_name" text NOT NULL,
           "team_id" uuid REFERENCES "teams" ("id"),
-          "role" text NOT NULL DEFAULT 'participant',
+          "role" text NOT NULL,
           "created_at" timestamp NOT NULL DEFAULT NOW(),
           "updated_at" timestamp NOT NULL DEFAULT NOW()
         );

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getConnection } from "@/app/lib/db/drizzle";
-import { students, participantApplications, judgeApplications } from "@/app/lib/db/schema";
+import { students, participantApplications, judgeApplications, mentorApplications } from "@/app/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function PUT(request: Request) {
@@ -44,6 +44,12 @@ export async function PUT(request: Request) {
       });
     } else if (role === "judge") {
       await db.insert(judgeApplications).values({
+        studentId: student.id,
+        status: "draft",
+        fullName: `${student.firstName} ${student.lastName}`.trim(),
+      });
+    } else if (role === "mentor") {
+      await db.insert(mentorApplications).values({
         studentId: student.id,
         status: "draft",
         fullName: `${student.firstName} ${student.lastName}`.trim(),

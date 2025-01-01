@@ -60,7 +60,7 @@ export default function JudgeApplication() {
   const [currentStep, setCurrentStep] = useState(0);
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [showPronounsOther, setShowPronounsOther] = useState(false);
-  const totalSteps = 4;
+  const totalSteps = 3;
 
   useEffect(() => {
     async function fetchStudentData() {
@@ -135,7 +135,7 @@ export default function JudgeApplication() {
                 {/* Progress Bar */}
                 <div className="mt-4">
                   <div className="flex justify-between mb-2">
-                    {[1, 2, 3, 4].map((step) => (
+                    {[1, 2, 3].map((step) => (
                       <span
                         key={step}
                         className={`text-sm font-chillax ${

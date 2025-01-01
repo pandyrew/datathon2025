@@ -21,6 +21,7 @@ async function reset() {
       await db.execute(sql`
         DROP TABLE IF EXISTS "participant_applications" CASCADE;
         DROP TABLE IF EXISTS "judge_applications" CASCADE;
+        DROP TABLE IF EXISTS "mentor_applications" CASCADE;
         DROP TABLE IF EXISTS "applications" CASCADE;
         DROP TABLE IF EXISTS "students" CASCADE;
         DROP TABLE IF EXISTS "teams" CASCADE;
@@ -30,18 +31,124 @@ async function reset() {
     } else {
       console.log("No tables to drop");
     }
+
+    // 2. Create tables in correct order
+    console.log("Creating tables...");
+    
+    // Create teams table first (no dependencies)
+    await db.execute(sql`
+      CREATE TABLE "teams" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "name" text NOT NULL,
+        "size" integer DEFAULT 1 NOT NULL,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      );
+    `);
+
+    // Create students table (depends on teams)
+    await db.execute(sql`
+      CREATE TABLE "students" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "user_id" text NOT NULL UNIQUE,
+        "email" text NOT NULL,
+        "first_name" text NOT NULL,
+        "last_name" text NOT NULL,
+        "team_id" uuid REFERENCES "teams"("id"),
+        "role" text,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      );
+    `);
+
+    // Create judge_applications table (depends on students)
+    await db.execute(sql`
+      CREATE TABLE "judge_applications" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "student_id" uuid NOT NULL REFERENCES "students"("id"),
+        "status" varchar(20) DEFAULT 'draft' NOT NULL,
+        "full_name" text,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL,
+        "pronouns" varchar(20),
+        "pronouns_other" text,
+        "affiliation" text,
+        "experience" text,
+        "motivation" text,
+        "feedback_comfort" integer,
+        "availability" boolean,
+        "linkedin_url" text,
+        "github_url" text,
+        "website_url" text
+      );
+    `);
+
+    // Create mentor_applications table (depends on students)
+    await db.execute(sql`
+      CREATE TABLE "mentor_applications" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "student_id" uuid NOT NULL REFERENCES "students"("id"),
+        "status" varchar(20) DEFAULT 'draft' NOT NULL,
+        "full_name" text,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL,
+        "pronouns" varchar(20),
+        "pronouns_other" text,
+        "affiliation" text,
+        "programming_languages" text[],
+        "comfort_level" integer,
+        "has_hackathon_experience" boolean,
+        "motivation" text,
+        "mentor_role_description" text,
+        "availability" text,
+        "linkedin_url" text,
+        "github_url" text,
+        "website_url" text,
+        "dietary_restrictions" text[]
+      );
+    `);
+
+    // Create participant_applications table (depends on students)
+    await db.execute(sql`
+      CREATE TABLE "participant_applications" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "student_id" uuid NOT NULL REFERENCES "students"("id"),
+        "status" varchar(20) DEFAULT 'draft' NOT NULL,
+        "full_name" text,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL,
+        "gender" varchar(20),
+        "pronouns" varchar(20),
+        "pronouns_other" text,
+        "university" text,
+        "major" text,
+        "education_level" varchar(20),
+        "is_first_datathon" boolean,
+        "comfort_level" integer,
+        "has_team" boolean,
+        "teammates" text,
+        "dietary_restrictions" text,
+        "development_goals" text,
+        "github_url" text,
+        "linkedin_url" text,
+        "attendance_confirmed" boolean,
+        "feedback" text
+      );
+    `);
+
+    console.log("Created all tables");
   } catch (error) {
-    console.error("Error checking/dropping tables:", error);
+    console.error("Error during reset:", error);
     throw error;
   }
 
-  // 2. Ensure migrations directory exists
+  // 3. Ensure migrations directory exists
   const migrationsDir = path.join(process.cwd(), "drizzle", "migrations");
   const metaDir = path.join(migrationsDir, "meta");
 
   await fs.mkdir(metaDir, { recursive: true });
 
-  // 3. Create _journal.json
+  // 4. Create _journal.json
   const journalContent = {
     version: "5",
     dialect: "pg",

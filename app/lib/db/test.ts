@@ -7,9 +7,11 @@ async function test() {
 
   if (connected) {
     console.log("\nFetching all applications...");
-    const applications = await getAllApplications();
-    console.log("Found applications:", applications);
+    const participantApplications = await getAllApplications("participant");
+    const judgeApplications = await getAllApplications("judge");
+    console.log("Found participant applications:", participantApplications);
+    console.log("Found judge applications:", judgeApplications);
   }
 }
 
-test().catch(console.error); 
+test().catch(console.error);

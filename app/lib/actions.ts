@@ -95,7 +95,7 @@ export async function updateApplicationData(
       .limit(1);
 
     const isParticipant = participantApp.length > 0;
-    let updateData: any = {};
+    let updateData: Record<string, string | number | boolean> = {};
 
     if (isParticipant) {
       const stepNumber = parseInt(step);

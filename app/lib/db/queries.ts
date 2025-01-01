@@ -4,6 +4,7 @@ import {
   judgeApplications,
   students,
   teams,
+  mentorApplications,
 } from "./schema";
 import { eq, sql } from "drizzle-orm";
 
@@ -48,10 +49,28 @@ export interface JudgeApplication extends BaseApplication {
   websiteUrl: string | null;
 }
 
+export interface MentorApplication extends BaseApplication {
+  pronouns: string | null;
+  pronounsOther: string | null;
+  affiliation: string | null;
+  programmingLanguages: string[] | null;
+  comfortLevel: number | null;
+  hasHackathonExperience: boolean | null;
+  motivation: string | null;
+  mentorRoleDescription: string | null;
+  availability: string | null;
+  linkedinUrl: string | null;
+  githubUrl: string | null;
+  websiteUrl: string | null;
+  dietaryRestrictions: string[] | null;
+}
+
 export async function getApplicationByStudentId(
   studentId: string,
   role: string
-): Promise<ParticipantApplication | JudgeApplication | null> {
+): Promise<
+  ParticipantApplication | JudgeApplication | MentorApplication | null
+> {
   const db = await getConnection();
 
   if (role === "participant") {
@@ -66,6 +85,13 @@ export async function getApplicationByStudentId(
       .select()
       .from(judgeApplications)
       .where(eq(judgeApplications.studentId, studentId))
+      .limit(1);
+    return result[0] || null;
+  } else if (role === "mentor") {
+    const result = await db
+      .select()
+      .from(mentorApplications)
+      .where(eq(mentorApplications.studentId, studentId))
       .limit(1);
     return result[0] || null;
   }
@@ -100,6 +126,16 @@ export async function updateApplication(
       .where(eq(judgeApplications.studentId, studentId))
       .returning();
     return result[0];
+  } else if (role === "mentor") {
+    const result = await db
+      .update(mentorApplications)
+      .set({
+        ...data,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where(eq(mentorApplications.studentId, studentId))
+      .returning();
+    return result[0];
   }
 }
 
@@ -109,6 +145,8 @@ export async function getAllApplications(role: string) {
     return db.select().from(participantApplications);
   } else if (role === "judge") {
     return db.select().from(judgeApplications);
+  } else if (role === "mentor") {
+    return db.select().from(mentorApplications);
   }
   return [];
 }
@@ -140,6 +178,16 @@ export async function updateApplicationStatus(
       .where(eq(judgeApplications.studentId, studentId))
       .returning();
     return result[0];
+  } else if (role === "mentor") {
+    const result = await db
+      .update(mentorApplications)
+      .set({
+        status,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where(eq(mentorApplications.studentId, studentId))
+      .returning();
+    return result[0];
   }
 }
 
@@ -160,7 +208,6 @@ export async function createStudent(data: {
   email: string;
   firstName: string;
   lastName: string;
-  role?: string;
 }) {
   const db = await getConnection();
 
@@ -169,7 +216,6 @@ export async function createStudent(data: {
     .insert(students)
     .values({
       ...data,
-      role: data.role || "participant",
     })
     .returning();
 
@@ -207,6 +253,13 @@ export async function getStudentWithDetails(userId: string) {
         .where(eq(judgeApplications.studentId, student.id))
         .limit(1);
       application = judgeApp;
+    } else if (student.role === "mentor") {
+      const [mentorApp] = await db
+        .select()
+        .from(mentorApplications)
+        .where(eq(mentorApplications.studentId, student.id))
+        .limit(1);
+      application = mentorApp;
     }
 
     // Get team if exists
@@ -252,6 +305,10 @@ export async function deleteApplications(studentId: string) {
   await db
     .delete(judgeApplications)
     .where(eq(judgeApplications.studentId, studentId));
+
+  await db
+    .delete(mentorApplications)
+    .where(eq(mentorApplications.studentId, studentId));
 
   return true;
 }
