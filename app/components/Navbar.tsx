@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -83,16 +85,41 @@ export default function Navbar() {
           >
             CONTACT
           </a>
-          <a
-            href="#apply"
-            className={`border-2 px-6 py-2 rounded-full transition-all ${
-              scrolled
-                ? "text-gray-900 border-gray-900 hover:bg-gray-900 hover:text-white"
-                : "text-white border-white hover:bg-white hover:text-black"
-            }`}
-          >
-            APPLY
-          </a>
+
+          {/* Auth Components */}
+          <SignedOut>
+            <SignInButton
+              mode="modal"
+              forceRedirectUrl="/dashboard"
+              signUpForceRedirectUrl="/dashboard"
+            >
+              <button
+                className={`border-2 px-6 py-2 rounded-full transition-all ${
+                  scrolled
+                    ? "text-gray-900 border-gray-900 hover:bg-gray-900 hover:text-white"
+                    : "text-white border-white hover:bg-white hover:text-black"
+                }`}
+              >
+                APPLY
+              </button>
+            </SignInButton>
+          </SignedOut>
+
+          <SignedIn>
+            <div className="flex items-center gap-4">
+              <a
+                href="/dashboard"
+                className={`border-2 px-6 py-2 rounded-full transition-all ${
+                  scrolled
+                    ? "text-gray-900 border-gray-900 hover:bg-gray-900 hover:text-white"
+                    : "text-white border-white hover:bg-white hover:text-black"
+                }`}
+              >
+                DASHBOARD
+              </a>
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </SignedIn>
         </div>
       </div>
     </nav>

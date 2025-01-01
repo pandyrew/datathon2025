@@ -6,23 +6,43 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:g": "drizzle-kit generate:pg",
+    "db:m": "tsx app/lib/db/migrate.ts",
+    "db:p": "drizzle-kit push:pg",
+    "db:s": "tsx app/lib/db/seed.ts",
+    "db:t": "tsx app/lib/db/test.ts",
+    "db:reset": "tsx app/lib/db/reset.ts && drizzle-kit generate && tsx app/lib/db/migrate.ts"
   },
   "dependencies": {
+    "@aws-sdk/dsql-signer": "^3.716.0",
+    "@clerk/nextjs": "^6.9.6",
+    "@vercel/functions": "^1.5.2",
+    "@vercel/postgres": "^0.10.0",
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "^0.30.1",
+    "drizzle-orm": "^0.38.3",
+    "drizzle-seed": "^0.2.1",
     "framer-motion": "^11.15.0",
     "next": "15.1.2",
+    "pg": "^8.13.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "svix": "^1.44.0",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
+    "@types/pg": "^8.11.10",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "eslint": "^9",
     "eslint-config-next": "15.1.2",
+    "ngrok": "5.0.0-beta.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }
