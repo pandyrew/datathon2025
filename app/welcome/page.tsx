@@ -91,19 +91,6 @@ export default function WelcomePage() {
           </button>
 
           <button
-            onClick={() => handleRoleSelect("judge")}
-            disabled={isLoading}
-            className="w-full bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors group"
-          >
-            <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600">
-              Judge
-            </h3>
-            <p className="text-gray-500 text-sm mt-1">
-              Join as a judge to evaluate projects and provide feedback
-            </p>
-          </button>
-
-          <button
             onClick={() => handleRoleSelect("mentor")}
             disabled={isLoading}
             className="w-full bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors group"
@@ -113,6 +100,19 @@ export default function WelcomePage() {
             </h3>
             <p className="text-gray-500 text-sm mt-1">
               Join as a mentor to help participants with their projects
+            </p>
+          </button>
+
+          <button
+            onClick={() => handleRoleSelect("judge")}
+            disabled={isLoading}
+            className="w-full bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors group"
+          >
+            <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600">
+              Judge
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">
+              Join as a judge to evaluate projects and provide feedback
             </p>
           </button>
         </div>

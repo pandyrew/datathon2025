@@ -1,4 +1,4 @@
-import StatsBox from "./StatsBox";
+import StatsBox from "./components/StatsBox";
 
 const STATS = [
   {

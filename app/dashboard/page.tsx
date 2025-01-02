@@ -9,7 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { getStudentWithDetails } from "@/app/lib/db/queries";
-import RoleSelector from "@/app/components/RoleSelector";
+import RoleSelector from "@/app/components/applications/components/RoleSelector";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
           </div>
         </div>
         {/* Development Info Section */}
-        <div className="mb-8 p-4 bg-gray-100 rounded-lg">
+        <div className="my-8 p-4 bg-gray-100 rounded-lg">
           <h2 className="text-lg font-semibold mb-4">
             Development Information
           </h2>

@@ -45,17 +45,11 @@ export async function GET() {
       .where(eq(mentorApplications.studentId, studentId))
       .limit(1);
 
-    const coordinatorApp = await db
-      .select({ id: coordinatorApplications.id })
-      .from(coordinatorApplications)
-      .where(eq(coordinatorApplications.studentId, studentId))
-      .limit(1);
-
     const hasApplication =
       participantApp.length > 0 ||
       judgeApp.length > 0 ||
-      mentorApp.length > 0 ||
-      coordinatorApp.length > 0;
+      mentorApp.length > 0
+
 
     return NextResponse.json({ hasApplication });
   } catch (error) {

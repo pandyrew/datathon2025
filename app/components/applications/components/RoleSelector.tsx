@@ -17,7 +17,7 @@ export default function RoleSelector({ currentRole }: RoleSelectorProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const roles: Role[] = ["participant", "judge", "mentor", "coordinator"];
+  const roles: Role[] = ["participant", "mentor", "judge"];
 
   const handleRoleChange = async (newRole: Role) => {
     if (newRole === currentRole) {
