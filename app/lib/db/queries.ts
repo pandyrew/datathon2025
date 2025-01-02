@@ -315,3 +315,48 @@ export async function deleteApplications(studentId: string) {
 
   return true;
 }
+
+export async function getApplicationStats() {
+  const db = await getConnection();
+
+  try {
+    // Get participant applications count with status breakdown
+    const participantStats = await db
+      .select({
+        total: sql`count(*)::int`,
+        pending: sql`count(case when status = 'pending' then 1 end)::int`,
+        approved: sql`count(case when status = 'accepted' then 1 end)::int`,
+        rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
+      })
+      .from(participantApplications);
+
+    // Get mentor applications count
+    const mentorStats = await db
+      .select({
+        total: sql`count(*)::int`,
+        pending: sql`count(case when status = 'pending' then 1 end)::int`,
+        approved: sql`count(case when status = 'accepted' then 1 end)::int`,
+        rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
+      })
+      .from(mentorApplications);
+
+    // Get judge applications count
+    const judgeStats = await db
+      .select({
+        total: sql`count(*)::int`,
+        pending: sql`count(case when status = 'pending' then 1 end)::int`,
+        approved: sql`count(case when status = 'accepted' then 1 end)::int`,
+        rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
+      })
+      .from(judgeApplications);
+
+    return {
+      participant: participantStats[0],
+      mentor: mentorStats[0],
+      judge: judgeStats[0],
+    };
+  } catch (error) {
+    console.error("Error getting application stats:", error);
+    throw new Error("Failed to get application statistics");
+  }
+}

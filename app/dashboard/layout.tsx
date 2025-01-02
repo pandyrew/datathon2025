@@ -11,6 +11,7 @@ type StudentData = {
     firstName: string;
     lastName: string;
     role: string;
+    email: string;
   };
 };
 
@@ -21,6 +22,7 @@ export default function DashboardLayout({
 }) {
   const { user, isLoaded } = useUser();
   const [isChecking, setIsChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     async function checkStudent() {
@@ -28,19 +30,18 @@ export default function DashboardLayout({
         try {
           const response = await fetch(`/api/students/${user.id}`);
           if (!response.ok) {
-            // If student not found (404) or any other error, redirect to welcome
             redirect("/welcome");
             return;
           }
 
           const data: StudentData = await response.json();
-          // If they don't have a role set, redirect to welcome page
           if (!data.student.role) {
             redirect("/welcome");
           }
+          // Check if user is admin
+          setIsAdmin(data.student.email === 'dataclub@uci.edu');
         } catch (error) {
           console.error("Error checking student:", error);
-          // On any error, redirect to welcome page
           redirect("/welcome");
         } finally {
           setIsChecking(false);
@@ -87,6 +88,14 @@ export default function DashboardLayout({
               >
                 Application
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/dashboard/admin"
+                  className="flex items-center text-indigo-600 hover:text-indigo-900 transition-colors font-chillax"
+                >
+                  Admin Panel
+                </Link>
+              )}
             </div>
           </div>
         </div>
