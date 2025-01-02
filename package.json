@@ -12,7 +12,9 @@
     "db:p": "drizzle-kit push:pg",
     "db:s": "tsx app/lib/db/seed.ts",
     "db:t": "tsx app/lib/db/test.ts",
-    "db:reset": "tsx app/lib/db/reset.ts && drizzle-kit generate && tsx app/lib/db/migrate.ts"
+    "db:reset": "tsx app/lib/db/reset.ts && drizzle-kit generate && tsx app/lib/db/migrate.ts",
+    "studio": "drizzle-kit studio",
+    "postinstall": "drizzle-kit generate"
   },
   "dependencies": {
     "@aws-sdk/dsql-signer": "^3.716.0",

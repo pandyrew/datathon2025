@@ -13,15 +13,15 @@ export async function getConnection(): Promise<NodePgDatabase<typeof schema>> {
   if (!pool) {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: false // Disable SSL for local development
+      ssl: process.env.NODE_ENV === "production",
     });
     db = drizzle(pool, { schema });
   }
-  
+
   if (!db) {
     throw new Error("Failed to establish database connection");
   }
-  
+
   return db;
 }
 
