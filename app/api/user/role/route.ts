@@ -1,7 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getConnection } from "@/app/lib/db/drizzle";
-import { students, participantApplications, judgeApplications, mentorApplications } from "@/app/lib/db/schema";
+import {
+  students,
+  participantApplications,
+  judgeApplications,
+  mentorApplications,
+} from "@/app/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function PUT(request: Request) {
@@ -22,10 +27,7 @@ export async function PUT(request: Request) {
       .limit(1);
 
     if (!student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
     // Update the role
