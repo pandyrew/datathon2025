@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import {
-  getStudentWithDetails,
+  // getStudentWithDetails,
   getApplicationStats,
 } from "@/app/lib/db/queries";
 import Link from "next/link";
@@ -71,7 +71,6 @@ export default async function AdminDashboard() {
   if (!userId) redirect("/");
 
   await requireAdmin(userId);
-
 
   // Get real stats from database
   const stats = await getApplicationStats();

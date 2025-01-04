@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getStudentWithDetails } from "@/app/lib/db/queries";
+// import { getStudentWithDetails } from "@/app/lib/db/queries";
 import ApplicationSection from "@/app/components/admin/ApplicationSection";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
