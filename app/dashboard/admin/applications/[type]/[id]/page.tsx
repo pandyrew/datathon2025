@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getStudentWithDetails } from "@/app/lib/db/queries";
 import Link from "next/link";
 import { ChevronLeft, Clock, Mail, User, Calendar, School } from "lucide-react";
+import { requireAdmin } from "@/app/lib/auth/adminCheck";
 
 type ApplicationType = "participant" | "mentor" | "judge" | "coordinator";
 
@@ -76,12 +77,11 @@ export default async function ApplicationDetailPage({
 
   const { userId } = await auth();
   if (!userId) redirect("/");
-  console.log(resolvedSearchParams);
 
-  const studentData = await getStudentWithDetails(userId);
-  if (studentData?.student.email !== "dataclub@uci.edu") {
-    redirect("/dashboard");
-  }
+  // Replace the manual check with requireAdmin
+  await requireAdmin(userId);
+
+  console.log(resolvedSearchParams);
 
   // Find the application
   const application = mockApplications[resolvedParams.type]?.find(

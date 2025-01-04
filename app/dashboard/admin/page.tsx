@@ -6,6 +6,7 @@ import {
 } from "@/app/lib/db/queries";
 import Link from "next/link";
 import { Users, UserCheck, Clock, XCircle } from "lucide-react";
+import { requireAdmin } from "@/app/lib/auth/adminCheck";
 
 function ApplicationCard({
   title,
@@ -69,10 +70,8 @@ export default async function AdminDashboard() {
   const { userId } = await auth();
   if (!userId) redirect("/");
 
-  const studentData = await getStudentWithDetails(userId);
-  if (studentData?.student.email !== "dataclub@uci.edu") {
-    redirect("/dashboard");
-  }
+  await requireAdmin(userId);
+
 
   // Get real stats from database
   const stats = await getApplicationStats();

@@ -5,6 +5,7 @@ import ApplicationSection from "@/app/components/admin/ApplicationSection";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Application, ApplicationType } from "@/app/types/application";
+import { requireAdmin } from "@/app/lib/auth/adminCheck";
 
 // Move mockApplications here or fetch real data
 const mockApplications: Record<ApplicationType, Application[]> = {
@@ -51,10 +52,8 @@ export default async function ApplicationTypePage({
   const { userId } = await auth();
   if (!userId) redirect("/");
 
-  const studentData = await getStudentWithDetails(userId);
-  if (studentData?.student.email !== "dataclub@uci.edu") {
-    redirect("/dashboard");
-  }
+  await requireAdmin(userId);
+
 
   const resolvedParams = await params;
   const applications = mockApplications[resolvedParams.type];

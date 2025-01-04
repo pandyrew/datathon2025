@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isAdminRoute = createRouteMatcher(["/dashboard/admin(.*)"]);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "").split(",");
 
 export default clerkMiddleware(async (auth, req) => {
   if (isAdminRoute(req)) {
@@ -14,9 +15,9 @@ export default clerkMiddleware(async (auth, req) => {
         `${req.nextUrl.origin}/api/students/${authObject.userId}`
       );
       const data = await response.json();
-      if (data.student.email !== "dataclub@uci.edu") {
+      if (!ADMIN_EMAILS.includes(data.student.email)) {
         return new Response(
-          "Dude you cant be here!!!!! If you are supposed to be here and you are part of data at uci, then TEXT ME. you know who to text....",
+          "Unauthorized: Admin access required",
           { status: 403 }
         );
       }

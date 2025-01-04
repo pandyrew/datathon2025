@@ -38,8 +38,11 @@ export default function DashboardLayout({
           if (!data.student.role) {
             redirect("/welcome");
           }
-          // Check if user is admin
-          setIsAdmin(data.student.email === 'dataclub@uci.edu');
+
+          // Check admin status through API
+          const adminCheckResponse = await fetch(`/api/auth/check-admin?userId=${user.id}`);
+          const adminData = await adminCheckResponse.json();
+          setIsAdmin(adminData.isAdmin);
         } catch (error) {
           console.error("Error checking student:", error);
           redirect("/welcome");
