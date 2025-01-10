@@ -14,11 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <SpeedInsights />
-      <html lang="en">
-        <body className={`antialiased`}>{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body className={`antialiased`}>
+        <ClerkProvider>
+          <SpeedInsights />
+          {children}
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
