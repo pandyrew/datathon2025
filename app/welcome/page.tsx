@@ -45,6 +45,7 @@ export default function WelcomePage() {
   const handleRoleSelect = async (role: string) => {
     setIsLoading(true);
     try {
+      console.log("role", role);
       const response = await fetch("/api/user/role", {
         method: "PUT",
         headers: {
@@ -59,7 +60,7 @@ export default function WelcomePage() {
 
       router.push("/dashboard");
     } catch (error) {
-      console.error("Error updating role:", error);
+      console.error("Error updating role in WelcomePage 60:", error);
       setIsLoading(false);
     }
   };
