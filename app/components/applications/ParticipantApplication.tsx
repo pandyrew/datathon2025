@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { redirect, useRouter } from "next/navigation";
 import { updateApplicationData, submitApplication } from "@/app/lib/actions";
+import LoadingSpinner from "./components/LoadingSpinner";
+import WelcomeStep from "./components/ParticipantWelcome";
 
 type StudentData = {
   student: {
@@ -98,11 +100,7 @@ export default function ParticipantApplication() {
   }
 
   if (!studentData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   // Verify the user's role
@@ -234,247 +232,161 @@ export default function ParticipantApplication() {
                 }
               }}
             >
-              {currentStep === 0 && (
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-outfit text-gray-900">
-                      2025 Datathon [NAME OF THEME] ~ [NAME OF EVENT]
+              {currentStep === 0 ? (
+                <WelcomeStep
+                  nextStep={nextStep}
+                  isSubmitted={studentData.application.status === "submitted"}
+                />
+              ) : (
+                currentStep === 1 && (
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-outfit mb-4">
+                      Personal Information
                     </h2>
 
-                    <div className="prose prose-indigo font-chillax">
-                      <p className="text-gray-600">
-                        [INSERT SHPEAL ABOUT DATATHON]
-                      </p>
-
-                      <div className="my-6">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          Datathon Information
-                        </h3>
-                        <ul className="mt-2 space-y-1 text-gray-600">
-                          <li>📅 Date: April 11th - 13th, 2024</li>
-                          <li>📍 Location: [INSERT LOCATION]</li>
-                          <li>[INSERT ADDY]</li>
-                        </ul>
-                      </div>
-
-                      <div className="my-6">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          Event Schedule Overview
-                        </h3>
-                        <p className="mt-2 text-gray-600">
-                          On April 11th, participants will have time to work on
-                          their project, attend workshops and socials, and
-                          network amongst our sponsors. On April 13th,
-                          participants will present their project (no more than
-                          5 minutes) in front of our judges in order to be
-                          eligible for prizes.
-                        </p>
-                        <p className="mt-2 text-gray-600 italic">
-                          More details to come later.
-                        </p>
-                      </div>
-
-                      <div className="my-6">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          Requirements for Participation
-                        </h3>
-                        <ul className="mt-2 space-y-1 text-gray-600 list-disc pl-5">
-                          <li>
-                            Must be at least 18 years old by the dates of
-                            Datathon
-                          </li>
-                          <li>
-                            Must be an undergraduate or graduate student at a
-                            university
-                          </li>
-                          <li>
-                            Must be able to attend in person on 4/11 and 4/13
-                          </li>
-                          <li>Teams of up to 4 are allowed</li>
-                        </ul>
-                      </div>
-
-                      <div className="mt-6 text-gray-600">
-                        <p>
-                          Application deadline:{" "}
-                          <span className="font-medium">
-                            March 27th, 2025 (Thursday) at 11:59 PM
-                          </span>
-                        </p>
-                        <p className="mt-2">
-                          If you have any questions, comments, or concerns feel
-                          free to email us at{" "}
-                          <a
-                            href="mailto:[INSERT EMAIL]"
-                            className="text-indigo-600 hover:text-indigo-700"
-                          >
-                            [INSERT EMAIL]
-                          </a>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-8">
-                      <button
-                        type="button"
-                        onClick={nextStep}
-                        className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition-colors font-chillax text-lg"
+                    <div>
+                      <label
+                        htmlFor="fullName"
+                        className="block text-sm font-medium text-gray-700 font-chillax"
                       >
-                        Awesome! Let&apos;s start →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <h2 className="text-xl font-outfit mb-4">
-                    Personal Information
-                  </h2>
-
-                  <div>
-                    <label
-                      htmlFor="fullName"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      id="fullName"
-                      name="fullName"
-                      defaultValue={
-                        studentData?.application?.fullName ||
-                        `${user?.firstName || ""} ${
-                          user?.lastName || ""
-                        }`.trim()
-                      }
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="gender"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      Gender *
-                    </label>
-                    <select
-                      id="gender"
-                      name="gender"
-                      defaultValue={studentData.application.gender || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    >
-                      <option value="">Select gender</option>
-                      <option value="female">Female</option>
-                      <option value="male">Male</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="pronouns"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      Preferred Pronouns
-                    </label>
-                    <div className="mt-1 space-y-2">
-                      <select
-                        id="pronouns"
-                        name="pronouns"
-                        defaultValue={studentData.application.pronouns || ""}
-                        onChange={(e) =>
-                          setShowPronounsOther(e.target.value === "other")
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        defaultValue={
+                          studentData?.application?.fullName ||
+                          `${user?.firstName || ""} ${
+                            user?.lastName || ""
+                          }`.trim()
                         }
-                        className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="gender"
+                        className="block text-sm font-medium text-gray-700 font-chillax"
                       >
-                        <option value="">Select pronouns</option>
-                        <option value="she/her">she/her/hers</option>
-                        <option value="he/him">he/him/his</option>
-                        <option value="they/them">they/them/theirs</option>
+                        Gender *
+                      </label>
+                      <select
+                        id="gender"
+                        name="gender"
+                        defaultValue={studentData.application.gender || ""}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                        required
+                      >
+                        <option value="">Select gender</option>
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
                         <option value="other">Other</option>
                       </select>
+                    </div>
 
-                      {showPronounsOther && (
-                        <input
-                          type="text"
-                          id="pronounsOther"
-                          name="pronounsOther"
-                          placeholder="Please specify your pronouns"
-                          defaultValue={
-                            studentData.application.pronounsOther || ""
+                    <div>
+                      <label
+                        htmlFor="pronouns"
+                        className="block text-sm font-medium text-gray-700 font-chillax"
+                      >
+                        Preferred Pronouns
+                      </label>
+                      <div className="mt-1 space-y-2">
+                        <select
+                          id="pronouns"
+                          name="pronouns"
+                          defaultValue={studentData.application.pronouns || ""}
+                          onChange={(e) =>
+                            setShowPronounsOther(e.target.value === "other")
                           }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                        />
-                      )}
+                        >
+                          <option value="">Select pronouns</option>
+                          <option value="she/her">she/her/hers</option>
+                          <option value="he/him">he/him/his</option>
+                          <option value="they/them">they/them/theirs</option>
+                          <option value="other">Other</option>
+                        </select>
+
+                        {showPronounsOther && (
+                          <input
+                            type="text"
+                            id="pronounsOther"
+                            name="pronounsOther"
+                            placeholder="Please specify your pronouns"
+                            defaultValue={
+                              studentData.application.pronounsOther || ""
+                            }
+                            className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="university"
+                        className="block text-sm font-medium text-gray-700 font-chillax"
+                      >
+                        University/College *
+                      </label>
+                      <input
+                        type="text"
+                        id="university"
+                        name="university"
+                        defaultValue={studentData.application.university || ""}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="major"
+                        className="block text-sm font-medium text-gray-700 font-chillax"
+                      >
+                        Major(s) *
+                      </label>
+                      <input
+                        type="text"
+                        id="major"
+                        name="major"
+                        defaultValue={studentData.application.major || ""}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="year"
+                        className="block text-sm font-medium text-gray-700 font-chillax"
+                      >
+                        Current Education Level *
+                      </label>
+                      <select
+                        id="year"
+                        name="year"
+                        defaultValue={
+                          studentData.application.educationLevel || ""
+                        }
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                        required
+                      >
+                        <option value="">Select year</option>
+                        <option value="1">First Year</option>
+                        <option value="2">Second Year</option>
+                        <option value="3">Third Year</option>
+                        <option value="4">Fourth Year</option>
+                        <option value="5">Fifth+ Year</option>
+                        <option value="graduate">Graduate Student</option>
+                      </select>
                     </div>
                   </div>
-
-                  <div>
-                    <label
-                      htmlFor="university"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      University/College *
-                    </label>
-                    <input
-                      type="text"
-                      id="university"
-                      name="university"
-                      defaultValue={studentData.application.university || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="major"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      Major(s) *
-                    </label>
-                    <input
-                      type="text"
-                      id="major"
-                      name="major"
-                      defaultValue={studentData.application.major || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="year"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      Current Education Level *
-                    </label>
-                    <select
-                      id="year"
-                      name="year"
-                      defaultValue={
-                        studentData.application.educationLevel || ""
-                      }
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    >
-                      <option value="">Select year</option>
-                      <option value="1">First Year</option>
-                      <option value="2">Second Year</option>
-                      <option value="3">Third Year</option>
-                      <option value="4">Fourth Year</option>
-                      <option value="5">Fifth+ Year</option>
-                      <option value="graduate">Graduate Student</option>
-                    </select>
-                  </div>
-                </div>
+                )
               )}
 
               {currentStep === 2 && (

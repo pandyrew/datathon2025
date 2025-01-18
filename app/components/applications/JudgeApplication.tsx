@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { redirect, useRouter } from "next/navigation";
 import { updateApplicationData, submitApplication } from "@/app/lib/actions";
+import LoadingSpinner from "./components/LoadingSpinner";
+import JudgeWelcome from "./components/JudgeWelcome";
 
 type StudentData = {
   student: {
@@ -29,17 +31,42 @@ type StudentData = {
   };
 };
 
+// Add this type for form data
+type JudgeFormData = {
+  fullName: string;
+  pronouns: string;
+  pronounsOther?: string;
+  affiliation: string;
+  motivation: string;
+  experience: string;
+  feedbackComfort: string;
+  availability: boolean;
+  linkedinUrl: string;
+  githubUrl: string;
+  websiteUrl?: string;
+};
+
 async function saveAndContinue(
-  formData: FormData,
+  formData: JudgeFormData,
   applicationId: string,
   currentStep: number,
-  setCurrentStep: (step: number) => void
+  setCurrentStep: (step: number) => void,
+  setIsSubmitting: (loading: boolean) => void
 ) {
+  setIsSubmitting(true);
   try {
+    const formDataToSubmit = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((item) => formDataToSubmit.append(key, item));
+      } else {
+        formDataToSubmit.append(key, value.toString());
+      }
+    });
     const result = await updateApplicationData(
       applicationId,
       currentStep.toString(),
-      formData
+      formDataToSubmit
     );
 
     if (!result.success) {
@@ -51,6 +78,8 @@ async function saveAndContinue(
     setCurrentStep(currentStep + 1);
   } catch (error) {
     console.error("Error saving step:", error);
+  } finally {
+    setIsSubmitting(false);
   }
 }
 
@@ -60,7 +89,23 @@ export default function JudgeApplication() {
   const [currentStep, setCurrentStep] = useState(0);
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [showPronounsOther, setShowPronounsOther] = useState(false);
-  const totalSteps = 3;
+  const totalSteps = 4;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // In the component, add state for form data
+  const [formData, setFormData] = useState<JudgeFormData>({
+    fullName: "",
+    pronouns: "",
+    pronounsOther: "",
+    affiliation: "",
+    motivation: "",
+    experience: "",
+    feedbackComfort: "3",
+    availability: false,
+    linkedinUrl: "",
+    githubUrl: "",
+    websiteUrl: "",
+  });
 
   useEffect(() => {
     async function fetchStudentData() {
@@ -73,24 +118,40 @@ export default function JudgeApplication() {
           const data = await response.json();
           setStudentData(data);
           setShowPronounsOther(data?.application?.pronouns === "other");
+
+          // Initialize form data with server data
+          if (data.application) {
+            setFormData({
+              fullName:
+                data.application.fullName ||
+                `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+              pronouns: data.application.pronouns || "",
+              pronounsOther: data.application.pronounsOther || "",
+              affiliation: data.application.affiliation || "",
+              motivation: data.application.motivation || "",
+              experience: data.application.experience || "",
+              feedbackComfort:
+                data.application.feedbackComfort?.toString() || "3",
+              availability: data.application.availability || false,
+              linkedinUrl: data.application.linkedinUrl || "",
+              githubUrl: data.application.githubUrl || "",
+              websiteUrl: data.application.websiteUrl || "",
+            });
+          }
         } catch (error) {
           console.error("Error fetching student data:", error);
         }
       }
     }
     fetchStudentData();
-  }, [user?.id]);
+  }, [user?.id, user?.firstName, user?.lastName]);
 
   if (isLoaded && !user) {
     redirect("/");
   }
 
   if (!studentData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (studentData.student.role !== "judge") {
@@ -115,6 +176,70 @@ export default function JudgeApplication() {
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Add a handler for form field changes
+  const handleFieldChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+    }));
+  };
+
+  // Update the handleSubmit function to use formData
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formDataToSubmit = new FormData();
+      // Add all form data to FormData object
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSubmit.append(key, value.toString());
+      });
+
+      if (currentStep < totalSteps - 1) {
+        await saveAndContinue(
+          formData,
+          studentData!.application.id,
+          currentStep,
+          setCurrentStep,
+          setIsSubmitting
+        );
+      } else {
+        const saveResult = await updateApplicationData(
+          studentData!.application.id,
+          currentStep.toString(),
+          formDataToSubmit
+        );
+
+        if (!saveResult.success) {
+          console.error("Failed to save final step:", saveResult.error);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const submitResult = await submitApplication(studentData!.student.id);
+
+        if (!submitResult.success) {
+          console.error("Failed to submit application:", submitResult.error);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -152,7 +277,9 @@ export default function JudgeApplication() {
                     <div
                       className="h-2 bg-indigo-600 rounded-full transition-all duration-300"
                       style={{
-                        width: `${((currentStep - 1) / 3) * 100}%`,
+                        width: `${
+                          ((currentStep - 1) / (totalSteps - 2)) * 100
+                        }%`,
                       }}
                     ></div>
                   </div>
@@ -162,141 +289,17 @@ export default function JudgeApplication() {
           </div>
 
           {/* Application Form */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <form
-              action={async (formData: FormData) => {
-                if (currentStep < totalSteps - 1) {
-                  await saveAndContinue(
-                    formData,
-                    studentData.application.id,
-                    currentStep,
-                    setCurrentStep
-                  );
-                } else {
-                  try {
-                    const saveResult = await updateApplicationData(
-                      studentData.application.id,
-                      currentStep.toString(),
-                      formData
-                    );
-
-                    if (!saveResult.success) {
-                      console.error(
-                        "Failed to save final step:",
-                        saveResult.error
-                      );
-                      return;
-                    }
-
-                    await new Promise((resolve) => setTimeout(resolve, 500));
-                    const submitResult = await submitApplication(
-                      studentData.student.id
-                    );
-
-                    if (!submitResult.success) {
-                      console.error(
-                        "Failed to submit application:",
-                        submitResult.error
-                      );
-                      return;
-                    }
-
-                    await new Promise((resolve) => setTimeout(resolve, 500));
-                    router.push("/dashboard");
-                  } catch (error) {
-                    console.error("Form submission error:", error);
-                  }
-                }
-              }}
-            >
-              {currentStep === 0 && (
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-outfit text-gray-900">
-                      Data @ UCI Datathon 2025 Judge Application
-                    </h2>
-
-                    <div className="prose prose-indigo font-chillax">
-                      <p className="text-gray-600">
-                        📊 Thank you for your interest in being a judge for the
-                        third annual collegiate Datathon at UC Irvine! 📊
-                      </p>
-
-                      <p className="mt-4 text-gray-600">
-                        We plan to bring students from across UCI and Orange
-                        County to work on innovative data projects that showcase
-                        their analytical skills and passion for data. Attendants
-                        will be able to analyze datasets provided by a variety
-                        of companies and tackle exciting data challenges.
-                      </p>
-
-                      <div className="my-6">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          Event Information
-                        </h3>
-                        <p className="mt-2 text-gray-600">
-                          The Datathon will occur April 11 - 13 at the
-                          [LOCATION]. Judges will only be needed in-person on
-                          Sunday, April 13th from 11 AM - 6 PM (times are
-                          subject to change depending on amount of data
-                          projects).
-                        </p>
-                        <p className="mt-2 text-gray-600 italic">
-                          Finalized detailed schedule and times will be
-                          available later.
-                        </p>
-                      </div>
-
-                      <div className="my-6">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          Requirements for Judges
-                        </h3>
-                        <ul className="mt-2 space-y-1 text-gray-600 list-disc pl-5">
-                          <li>
-                            Experience working in data science, data analytics,
-                            or other related fields
-                          </li>
-                          <li>Give good feedback and constructive criticism</li>
-                          <li>
-                            Ability to attend in-person on Sunday, April 14
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div className="mt-6 text-gray-600">
-                        <p>
-                          Application deadline:{" "}
-                          <span className="font-medium">
-                            Friday, March 28th
-                          </span>
-                        </p>
-                        <p className="mt-2">
-                          If you have any questions, please feel free to email
-                          us at{" "}
-                          <a
-                            href="mailto:data.ucirvine@gmail.com"
-                            className="text-indigo-600 hover:text-indigo-700"
-                          >
-                            data.ucirvine@gmail.com
-                          </a>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-8">
-                      <button
-                        type="button"
-                        onClick={nextStep}
-                        className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition-colors font-chillax text-lg"
-                      >
-                        Let&apos;s begin →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 1 && (
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white p-6 rounded-lg shadow-sm border border-gray-100"
+          >
+            {currentStep === 0 ? (
+              <JudgeWelcome
+                nextStep={nextStep}
+                isSubmitted={studentData.application.status === "submitted"}
+              />
+            ) : (
+              currentStep === 1 && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-outfit mb-4">
                     Basic Information
@@ -313,12 +316,8 @@ export default function JudgeApplication() {
                       type="text"
                       id="fullName"
                       name="fullName"
-                      defaultValue={
-                        studentData.application.fullName ||
-                        `${user?.firstName || ""} ${
-                          user?.lastName || ""
-                        }`.trim()
-                      }
+                      value={formData.fullName}
+                      onChange={handleFieldChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                       required
                     />
@@ -335,10 +334,8 @@ export default function JudgeApplication() {
                       <select
                         id="pronouns"
                         name="pronouns"
-                        defaultValue={studentData.application.pronouns || ""}
-                        onChange={(e) =>
-                          setShowPronounsOther(e.target.value === "other")
-                        }
+                        value={formData.pronouns}
+                        onChange={handleFieldChange}
                         className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                         required
                       >
@@ -355,9 +352,8 @@ export default function JudgeApplication() {
                           id="pronounsOther"
                           name="pronounsOther"
                           placeholder="Please specify your pronouns"
-                          defaultValue={
-                            studentData.application.pronounsOther || ""
-                          }
+                          value={formData.pronounsOther}
+                          onChange={handleFieldChange}
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                           required
                         />
@@ -377,193 +373,208 @@ export default function JudgeApplication() {
                       type="text"
                       id="affiliation"
                       name="affiliation"
-                      defaultValue={studentData.application.affiliation || ""}
+                      value={formData.affiliation}
+                      onChange={handleFieldChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                       required
                     />
                   </div>
                 </div>
-              )}
+              )
+            )}
 
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <h2 className="text-xl font-outfit mb-4">
-                    Additional Questions
-                  </h2>
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-outfit mb-4">
+                  Additional Questions
+                </h2>
 
-                  <div>
-                    <label
-                      htmlFor="motivation"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      What do you hope to gain personally or professionally from
-                      serving as a judge in this Datathon? *
-                    </label>
-                    <textarea
-                      id="motivation"
-                      name="motivation"
-                      rows={4}
-                      defaultValue={studentData.application.motivation || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="experience"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      What experience do you have with data analysis, data
-                      science, or related fields? *
-                    </label>
-                    <textarea
-                      id="experience"
-                      name="experience"
-                      rows={4}
-                      defaultValue={studentData.application.experience || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="feedbackComfort"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      How comfortable are you with giving feedback to
-                      participants, both positive and constructive? *
-                    </label>
-                    <input
-                      type="range"
-                      id="feedbackComfort"
-                      name="feedbackComfort"
-                      min="1"
-                      max="5"
-                      defaultValue={
-                        studentData.application.feedbackComfort || "3"
-                      }
-                      className="mt-1 block w-full"
-                      required
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 font-chillax">
-                      <span>Not comfortable at all</span>
-                      <span>Very comfortable</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 font-chillax">
-                      Data projects will be presented in-person on Sunday, April
-                      13th. Are you able to commit the full duration of the
-                      presentations and judge projects in-person? *
-                    </label>
-                    <p className="mt-1 text-sm text-gray-500 font-chillax">
-                      Judges are required to attend in-person on Sunday, April
-                      13th. Judging is set to be between 11 AM - 6 PM (times are
-                      subject to change).
-                    </p>
-                    <div className="mt-2">
-                      <input
-                        type="checkbox"
-                        id="availability"
-                        name="availability"
-                        defaultChecked={
-                          studentData.application.availability || false
-                        }
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                        required
-                      />
-                      <label
-                        htmlFor="availability"
-                        className="ml-2 text-sm text-gray-700 font-chillax"
-                      >
-                        Yes, I can commit to this time
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <h2 className="text-xl font-outfit mb-4">External Links</h2>
-
-                  <div>
-                    <label
-                      htmlFor="linkedin"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      LinkedIn *
-                    </label>
-                    <input
-                      type="url"
-                      id="linkedin"
-                      name="linkedin"
-                      defaultValue={studentData.application.linkedinUrl || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="github"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      GitHub *
-                    </label>
-                    <input
-                      type="url"
-                      id="github"
-                      name="github"
-                      defaultValue={studentData.application.githubUrl || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="website"
-                      className="block text-sm font-medium text-gray-700 font-chillax"
-                    >
-                      Personal Website / Portfolio
-                    </label>
-                    <input
-                      type="url"
-                      id="website"
-                      name="website"
-                      defaultValue={studentData.application.websiteUrl || ""}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Navigation Buttons */}
-              {currentStep > 0 && (
-                <div className="flex justify-between pt-4">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="bg-gray-100 text-gray-600 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors font-chillax"
+                <div>
+                  <label
+                    htmlFor="motivation"
+                    className="block text-sm font-medium text-gray-700 font-chillax"
                   >
-                    Previous
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors font-chillax"
-                  >
-                    {currentStep < totalSteps - 1
-                      ? "Next"
-                      : "Submit Application"}
-                  </button>
+                    What do you hope to gain personally or professionally from
+                    serving as a judge in this Datathon? *
+                  </label>
+                  <textarea
+                    id="motivation"
+                    name="motivation"
+                    rows={4}
+                    value={formData.motivation}
+                    onChange={handleFieldChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                    required
+                  />
                 </div>
-              )}
-            </form>
-          </div>
+
+                <div>
+                  <label
+                    htmlFor="experience"
+                    className="block text-sm font-medium text-gray-700 font-chillax"
+                  >
+                    What experience do you have with data analysis, data
+                    science, or related fields? *
+                  </label>
+                  <textarea
+                    id="experience"
+                    name="experience"
+                    rows={4}
+                    value={formData.experience}
+                    onChange={handleFieldChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="feedbackComfort"
+                    className="block text-sm font-medium text-gray-700 font-chillax"
+                  >
+                    How comfortable are you with giving feedback to
+                    participants, both positive and constructive? *
+                  </label>
+                  <input
+                    type="range"
+                    id="feedbackComfort"
+                    name="feedbackComfort"
+                    min="1"
+                    max="5"
+                    value={formData.feedbackComfort}
+                    onChange={handleFieldChange}
+                    className="mt-1 block w-full"
+                    required
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 font-chillax">
+                    <span>Not comfortable at all</span>
+                    <span>Very comfortable</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 font-chillax">
+                    Data projects will be presented in-person on Sunday, April
+                    13th. Are you able to commit the full duration of the
+                    presentations and judge projects in-person? *
+                  </label>
+                  <p className="mt-1 text-sm text-gray-500 font-chillax">
+                    Judges are required to attend in-person on Sunday, April
+                    13th. Judging is set to be between 11 AM - 6 PM (times are
+                    subject to change).
+                  </p>
+                  <div className="mt-2">
+                    <input
+                      type="checkbox"
+                      id="availability"
+                      name="availability"
+                      checked={formData.availability}
+                      onChange={handleFieldChange}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      required
+                    />
+                    <label
+                      htmlFor="availability"
+                      className="ml-2 text-sm text-gray-700 font-chillax"
+                    >
+                      Yes, I can commit to this time
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-outfit mb-4">External Links</h2>
+
+                <div>
+                  <label
+                    htmlFor="linkedinUrl"
+                    className="block text-sm font-medium text-gray-700 font-chillax"
+                  >
+                    LinkedIn *
+                  </label>
+                  <input
+                    type="text"
+                    id="linkedinUrl"
+                    name="linkedinUrl"
+                    value={formData.linkedinUrl}
+                    onChange={handleFieldChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="githubUrl"
+                    className="block text-sm font-medium text-gray-700 font-chillax"
+                  >
+                    GitHub *
+                  </label>
+                  <input
+                    type="text"
+                    id="githubUrl"
+                    name="githubUrl"
+                    value={formData.githubUrl}
+                    onChange={handleFieldChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="websiteUrl"
+                    className="block text-sm font-medium text-gray-700 font-chillax"
+                  >
+                    Personal Website / Portfolio
+                  </label>
+                  <input
+                    type="text"
+                    id="websiteUrl"
+                    name="websiteUrl"
+                    value={formData.websiteUrl}
+                    onChange={handleFieldChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            {currentStep > 0 && (
+              <div className="flex justify-between pt-4">
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  disabled={isSubmitting}
+                  className="bg-gray-100 text-gray-600 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors font-chillax disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors font-chillax disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {currentStep < totalSteps - 1
+                        ? "Saving..."
+                        : "Submitting..."}
+                    </>
+                  ) : currentStep < totalSteps - 1 ? (
+                    "Next"
+                  ) : (
+                    "Submit Application"
+                  )}
+                </button>
+              </div>
+            )}
+          </form>
         </div>
       </div>
     </div>
