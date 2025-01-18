@@ -1,7 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getConnection } from "@/app/lib/db/drizzle";
-import { participantApplications, judgeApplications, students } from "@/app/lib/db/schema";
+import {
+  participantApplications,
+  judgeApplications,
+  students,
+  mentorApplications,
+} from "@/app/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function DELETE() {
@@ -26,7 +31,7 @@ export async function DELETE() {
 
     const studentId = student[0].id;
 
-    // Delete from both participant and judge applications
+    // Delete from all application types
     await db
       .delete(participantApplications)
       .where(eq(participantApplications.studentId, studentId));
@@ -34,6 +39,16 @@ export async function DELETE() {
     await db
       .delete(judgeApplications)
       .where(eq(judgeApplications.studentId, studentId));
+
+    await db
+      .delete(mentorApplications)
+      .where(eq(mentorApplications.studentId, studentId));
+
+    // Reset the student's role to null
+    await db
+      .update(students)
+      .set({ role: null })
+      .where(eq(students.userId, userId));
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -43,4 +58,4 @@ export async function DELETE() {
       { status: 500 }
     );
   }
-} 
+}

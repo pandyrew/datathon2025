@@ -7,7 +7,9 @@ import { Webhook } from "svix";
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
   if (!WEBHOOK_SECRET) {
-    throw new Error("Missing CLERK_WEBHOOK_SECRET also yes here is a random change so i can push");
+    throw new Error(
+      "Missing CLERK_WEBHOOK_SECRET also yes here is a random change so i can push"
+    );
   }
 
   // Get the headers
@@ -51,6 +53,7 @@ export async function POST(req: Request) {
   const eventType = evt.type;
   if (eventType === "user.created") {
     const { id, email_addresses, first_name, last_name } = payload.data;
+    console.log("creating student", id, email_addresses, first_name, last_name);
     const db = await getConnection();
 
     try {
