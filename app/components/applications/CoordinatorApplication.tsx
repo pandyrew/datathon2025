@@ -2,6 +2,7 @@ import { useUser } from "@clerk/nextjs";
 import { redirect, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { updateApplicationData, submitApplication } from "@/app/lib/actions";
+import LoadingSpinner from './components/LoadingSpinner';
 
 type StudentData = {
   student: {
@@ -51,11 +52,7 @@ export default function CoordinatorApplication() {
   }
 
   if (!studentData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   // Verify the user's role
