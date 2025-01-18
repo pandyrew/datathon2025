@@ -13,6 +13,7 @@ interface RoleSelectorProps {
 export default function RoleSelector({ currentRole }: RoleSelectorProps) {
   const router = useRouter();
   const [showWarning, setShowWarning] = useState(false);
+  const [showStatusWarning, setShowStatusWarning] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -25,12 +26,22 @@ export default function RoleSelector({ currentRole }: RoleSelectorProps) {
       return;
     }
 
-    // Store the selected role temporarily
-    setSelectedRole(newRole);
-
     // Check if user has an existing application
     const response = await fetch(`/api/applications/check`);
-    const { hasApplication } = await response.json();
+    const { hasApplication, applicationStatus } = await response.json();
+
+    // Store selected role before showing warning or updating
+    setSelectedRole(newRole);
+
+    // Prevent role switch if application is submitted/accepted/rejected
+    if (
+      hasApplication &&
+      ["submitted", "accepted", "rejected"].includes(applicationStatus)
+    ) {
+      setShowStatusWarning(true);
+      setIsOpen(false);
+      return;
+    }
 
     if (hasApplication) {
       setShowWarning(true);
@@ -57,7 +68,7 @@ export default function RoleSelector({ currentRole }: RoleSelectorProps) {
 
       router.refresh();
     } catch (error) {
-      console.error("Error updating role:", error);
+      console.error("Error updating role in RoleSelector 60:", error);
     } finally {
       setIsLoading(false);
       setShowWarning(false);
@@ -125,6 +136,29 @@ export default function RoleSelector({ currentRole }: RoleSelectorProps) {
           )}
         </div>
       </div>
+
+      {/* Status Warning Dialog */}
+      {showStatusWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4 font-outfit">
+              Cannot Change Role
+            </h3>
+            <p className="text-gray-600 mb-6 font-chillax">
+              You cannot change roles after submitting an application or
+              receiving a decision.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowStatusWarning(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-chillax"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Warning Dialog */}
       {showWarning && (

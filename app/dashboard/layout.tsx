@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 
 import Link from "next/link";
+import DashboardLoading from "./loading";
 
 type StudentData = {
   student: {
@@ -41,7 +42,9 @@ export default function DashboardLayout({
           }
 
           // Check admin status through API
-          const adminCheckResponse = await fetch(`/api/auth/check-admin?userId=${user.id}`);
+          const adminCheckResponse = await fetch(
+            `/api/auth/check-admin?userId=${user.id}`
+          );
           const adminData = await adminCheckResponse.json();
           setIsAdmin(adminData.isAdmin);
         } catch (error) {
@@ -60,9 +63,11 @@ export default function DashboardLayout({
   }
 
   if (isChecking) {
+    console.log("isChecking");
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex flex-col">
+        <div className="w-full bg-white h-16 border-b border-gray-200" />
+        <DashboardLoading />
       </div>
     );
   }
@@ -89,6 +94,7 @@ export default function DashboardLayout({
               <Link
                 href="/dashboard/application"
                 className="flex items-center text-gray-600 hover:text-gray-900 transition-colors font-chillax"
+                prefetch={true}
               >
                 Application
               </Link>
