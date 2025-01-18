@@ -1,48 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-// import { getStudentWithDetails } from "@/app/lib/db/queries";
+import { getApplicationsByTypeAndStatus } from "@/app/lib/db/queries";
 import ApplicationSection from "@/app/components/admin/ApplicationSection";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { Application, ApplicationType } from "@/app/types/application";
+import { ApplicationType } from "@/app/types/application";
 import { requireAdmin } from "@/app/lib/auth/adminCheck";
-
-// Move mockApplications here or fetch real data
-const mockApplications: Record<ApplicationType, Application[]> = {
-  participant: [
-    {
-      id: "1",
-      fullName: "John Doe",
-      email: "john@uci.edu",
-      status: "accepted",
-      submittedAt: "2025-03-20",
-    },
-    {
-      id: "2",
-      fullName: "Jane Doe",
-      email: "jane@uci.edu",
-      status: "pending",
-      submittedAt: "2025-03-20",
-    },
-    {
-      id: "3",
-      fullName: "John Doe",
-      email: "john@uci.edu",
-      status: "rejected",
-      submittedAt: "2025-03-20",
-    },
-    {
-      id: "4",
-      fullName: "John Doe",
-      email: "john@uci.edu",
-      status: "pending",
-      submittedAt: "2025-03-20",
-    },
-  ],
-  mentor: [],
-  judge: [],
-  coordinator: [],
-};
 
 export default async function ApplicationTypePage({
   params,
@@ -54,9 +17,11 @@ export default async function ApplicationTypePage({
 
   await requireAdmin(userId);
 
-
   const resolvedParams = await params;
-  const applications = mockApplications[resolvedParams.type];
+  const applications = await getApplicationsByTypeAndStatus(
+    resolvedParams.type
+  );
+
   const typeTitle =
     resolvedParams.type.charAt(0).toUpperCase() + resolvedParams.type.slice(1);
 

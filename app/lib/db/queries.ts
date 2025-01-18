@@ -5,8 +5,10 @@ import {
   students,
   teams,
   mentorApplications,
+  ratings,
 } from "./schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
+import { ApplicationType, Application } from "@/app/types/application";
 
 export interface BaseApplication {
   id: string;
@@ -66,7 +68,7 @@ export interface MentorApplication extends BaseApplication {
 }
 
 export async function getApplicationByStudentId(
-  studentId: string,
+  applicationId: string,
   role: string
 ): Promise<
   ParticipantApplication | JudgeApplication | MentorApplication | null
@@ -77,21 +79,21 @@ export async function getApplicationByStudentId(
     const result = await db
       .select()
       .from(participantApplications)
-      .where(eq(participantApplications.studentId, studentId))
+      .where(eq(participantApplications.id, applicationId))
       .limit(1);
     return result[0] || null;
   } else if (role === "judge") {
     const result = await db
       .select()
       .from(judgeApplications)
-      .where(eq(judgeApplications.studentId, studentId))
+      .where(eq(judgeApplications.id, applicationId))
       .limit(1);
     return result[0] || null;
   } else if (role === "mentor") {
     const result = await db
       .select()
       .from(mentorApplications)
-      .where(eq(mentorApplications.studentId, studentId))
+      .where(eq(mentorApplications.id, applicationId))
       .limit(1);
     return result[0] || null;
   }
@@ -324,8 +326,8 @@ export async function getApplicationStats() {
     const participantStats = await db
       .select({
         total: sql`count(*)::int`,
-        pending: sql`count(case when status = 'pending' then 1 end)::int`,
-        approved: sql`count(case when status = 'accepted' then 1 end)::int`,
+        submitted: sql`count(case when status = 'submitted' then 1 end)::int`,
+        accepted: sql`count(case when status = 'accepted' then 1 end)::int`,
         rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
       })
       .from(participantApplications);
@@ -334,8 +336,8 @@ export async function getApplicationStats() {
     const mentorStats = await db
       .select({
         total: sql`count(*)::int`,
-        pending: sql`count(case when status = 'pending' then 1 end)::int`,
-        approved: sql`count(case when status = 'accepted' then 1 end)::int`,
+        submitted: sql`count(case when status = 'submitted' then 1 end)::int`,
+        accepted: sql`count(case when status = 'accepted' then 1 end)::int`,
         rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
       })
       .from(mentorApplications);
@@ -344,8 +346,8 @@ export async function getApplicationStats() {
     const judgeStats = await db
       .select({
         total: sql`count(*)::int`,
-        pending: sql`count(case when status = 'pending' then 1 end)::int`,
-        approved: sql`count(case when status = 'accepted' then 1 end)::int`,
+        submitted: sql`count(case when status = 'submitted' then 1 end)::int`,
+        accepted: sql`count(case when status = 'accepted' then 1 end)::int`,
         rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
       })
       .from(judgeApplications);
@@ -359,4 +361,183 @@ export async function getApplicationStats() {
     console.error("Error getting application stats:", error);
     throw new Error("Failed to get application statistics");
   }
+}
+
+export async function getApplicationsByType(type: ApplicationType) {
+  const db = await getConnection();
+
+  let applications: Application[] = [];
+  switch (type) {
+    case "participant":
+      applications = await db
+        .select({
+          id: participantApplications.id,
+          fullName: sql<string>`COALESCE(${participantApplications.fullName}, '')`,
+          email: students.email,
+          status: participantApplications.status,
+          submittedAt: participantApplications.updatedAt,
+        })
+        .from(participantApplications)
+        .innerJoin(
+          students,
+          eq(students.id, participantApplications.studentId)
+        );
+      break;
+    case "mentor":
+      applications = await db
+        .select({
+          id: mentorApplications.id,
+          fullName: sql<string>`COALESCE(${mentorApplications.fullName}, '')`,
+          email: students.email,
+          status: mentorApplications.status,
+          submittedAt: mentorApplications.updatedAt,
+        })
+        .from(mentorApplications)
+        .innerJoin(students, eq(students.id, mentorApplications.studentId));
+      break;
+    case "judge":
+      applications = await db
+        .select({
+          id: judgeApplications.id,
+          fullName: sql<string>`COALESCE(${judgeApplications.fullName}, '')`,
+          email: students.email,
+          status: judgeApplications.status,
+          submittedAt: judgeApplications.updatedAt,
+        })
+        .from(judgeApplications)
+        .innerJoin(students, eq(students.id, judgeApplications.studentId));
+      break;
+    default:
+      applications = [];
+  }
+
+  return applications;
+}
+
+export async function getApplicationsByTypeAndStatus(type: ApplicationType) {
+  const db = await getConnection();
+
+  let applications: Application[] = [];
+  switch (type) {
+    case "participant":
+      applications = await db
+        .select({
+          id: participantApplications.id,
+          fullName: sql<string>`COALESCE(${participantApplications.fullName}, '')`,
+          email: students.email,
+          status: participantApplications.status,
+          submittedAt: participantApplications.updatedAt,
+        })
+        .from(participantApplications)
+        .innerJoin(students, eq(students.id, participantApplications.studentId))
+        .where(
+          sql`${participantApplications.status} IN ('submitted', 'accepted', 'rejected')`
+        );
+      break;
+    case "mentor":
+      applications = await db
+        .select({
+          id: mentorApplications.id,
+          fullName: sql<string>`COALESCE(${mentorApplications.fullName}, '')`,
+          email: students.email,
+          status: mentorApplications.status,
+          submittedAt: mentorApplications.updatedAt,
+        })
+        .from(mentorApplications)
+        .innerJoin(students, eq(students.id, mentorApplications.studentId))
+        .where(
+          sql`${mentorApplications.status} IN ('submitted', 'accepted', 'rejected')`
+        );
+      break;
+    case "judge":
+      applications = await db
+        .select({
+          id: judgeApplications.id,
+          fullName: sql<string>`COALESCE(${judgeApplications.fullName}, '')`,
+          email: students.email,
+          status: judgeApplications.status,
+          submittedAt: judgeApplications.updatedAt,
+        })
+        .from(judgeApplications)
+        .innerJoin(students, eq(students.id, judgeApplications.studentId))
+        .where(
+          sql`${judgeApplications.status} IN ('submitted', 'accepted', 'rejected')`
+        );
+      break;
+    default:
+      applications = [];
+  }
+
+  return applications;
+}
+
+export async function addRating(data: {
+  applicationId: string;
+  applicationRole: string;
+  score: number;
+  feedback?: string;
+  ratedBy: string;
+}) {
+  const db = await getConnection();
+
+  const result = await db
+    .insert(ratings)
+    .values({
+      ...data,
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+    })
+    .returning();
+
+  return result[0];
+}
+
+export async function getRating(applicationId: string) {
+  const db = await getConnection();
+
+  const result = await db
+    .select()
+    .from(ratings)
+    .where(eq(ratings.applicationId, applicationId))
+    .orderBy(desc(ratings.createdAt))
+    .limit(1);
+
+  return result[0] || null;
+}
+
+export async function getAllRatings(applicationId: string) {
+  const db = await getConnection();
+
+  const result = await db
+    .select()
+    .from(ratings)
+    .where(eq(ratings.applicationId, applicationId))
+    .orderBy(desc(ratings.createdAt));
+
+  return result;
+}
+
+export async function deleteRating(ratingId: string) {
+  const db = await getConnection();
+  await db.delete(ratings).where(eq(ratings.id, ratingId));
+}
+
+export async function updateRating(
+  ratingId: string,
+  data: {
+    score: number;
+    feedback?: string;
+  }
+) {
+  const db = await getConnection();
+
+  const result = await db
+    .update(ratings)
+    .set({
+      ...data,
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+    })
+    .where(eq(ratings.id, ratingId))
+    .returning();
+
+  return result[0];
 }

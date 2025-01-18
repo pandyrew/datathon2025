@@ -136,6 +136,20 @@ async function reset() {
       );
     `);
 
+    // Create ratings table
+    await db.execute(sql`
+      CREATE TABLE "ratings" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "application_id" uuid NOT NULL,
+        "application_role" varchar(20) NOT NULL,
+        "score" integer NOT NULL,
+        "feedback" text,
+        "rated_by" uuid NOT NULL,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      );
+    `);
+
     console.log("Created all tables");
   } catch (error) {
     console.error("Error during reset:", error);

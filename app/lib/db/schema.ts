@@ -96,10 +96,21 @@ export const judgeApplications = pgTable("judge_applications", {
   websiteUrl: text("website_url"),
 });
 
-
 // You can keep these if needed for other functionality
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
+});
+
+// Add this with the other table definitions
+export const ratings = pgTable("ratings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  applicationId: uuid("application_id").notNull(),
+  applicationRole: varchar("application_role", { length: 20 }).notNull(), // "participant", "mentor", "judge"
+  score: integer("score").notNull(),
+  feedback: text("feedback"),
+  ratedBy: uuid("rated_by").notNull(), // references students.id of the admin/judge
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

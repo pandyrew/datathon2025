@@ -16,8 +16,8 @@ function ApplicationCard({
   title: string;
   stats: {
     total: number;
-    pending: number;
-    approved: number;
+    submitted: number;
+    accepted: number;
     rejected: number;
   };
   href: string;
@@ -42,9 +42,9 @@ function ApplicationCard({
           <div className="bg-yellow-50 p-4 rounded-lg">
             <div className="flex items-center gap-2 text-yellow-600 mb-1">
               <Clock className="w-4 h-4" />
-              <span className="text-sm font-chillax">Pending</span>
+              <span className="text-sm font-chillax">Submitted</span>
             </div>
-            <p className="text-2xl font-outfit">{stats.pending}</p>
+            <p className="text-2xl font-outfit">{stats.submitted}</p>
           </div>
           <div className="bg-red-50 p-4 rounded-lg">
             <div className="flex items-center gap-2 text-red-600 mb-1">
@@ -58,7 +58,7 @@ function ApplicationCard({
               <UserCheck className="w-4 h-4" />
               <span className="text-sm font-chillax">Accepted</span>
             </div>
-            <p className="text-2xl font-outfit">{stats.approved}</p>
+            <p className="text-2xl font-outfit">{stats.accepted}</p>
           </div>
         </div>
       </div>
@@ -96,8 +96,8 @@ export default async function AdminDashboard() {
               stats={
                 stats.participant as {
                   total: number;
-                  pending: number;
-                  approved: number;
+                  submitted: number;
+                  accepted: number;
                   rejected: number;
                 }
               }
@@ -109,8 +109,8 @@ export default async function AdminDashboard() {
               stats={
                 stats.mentor as {
                   total: number;
-                  pending: number;
-                  approved: number;
+                  submitted: number;
+                  accepted: number;
                   rejected: number;
                 }
               }
@@ -122,8 +122,8 @@ export default async function AdminDashboard() {
               stats={
                 stats.judge as {
                   total: number;
-                  pending: number;
-                  approved: number;
+                  submitted: number;
+                  accepted: number;
                   rejected: number;
                 }
               }

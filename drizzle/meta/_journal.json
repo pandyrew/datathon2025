@@ -36,6 +36,13 @@
       "when": 1735727044473,
       "tag": "0004_special_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1736397912913,
+      "tag": "0005_careless_celestials",
+      "breakpoints": true
     }
   ]
 }

@@ -1,93 +1,163 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-// import { getStudentWithDetails } from "@/app/lib/db/queries";
+import { getApplicationByStudentId } from "@/app/lib/db/queries";
 import Link from "next/link";
-import { ChevronLeft, Clock, Mail, User, Calendar, School } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { requireAdmin } from "@/app/lib/auth/adminCheck";
+import { ApplicationType } from "@/app/types/application";
+import { formatDate } from "@/app/lib/utils/formatDate";
+import { Application } from "@/app/types/application";
+import RatingSystem from "@/app/components/admin/RatingSystem";
+import {
+  ParticipantApplication,
+  JudgeApplication,
+  MentorApplication,
+} from "@/app/types/application";
 
-type ApplicationType = "participant" | "mentor" | "judge" | "coordinator";
+function ApplicationRow({ label, value }: { label: string; value: unknown }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 py-4 px-4 border-b border-gray-200 hover:bg-gray-50">
+      <div className="sm:col-span-1 font-medium text-gray-500 pb-1 sm:mb-0 font-outfit">
+        {label}
+      </div>
+      <div className="sm:col-span-2 text-gray-900 font-outfit">
+        {typeof value === "boolean"
+          ? value
+            ? "Yes"
+            : "No"
+          : value === null || value === ""
+          ? "Not specified"
+          : typeof value === "object"
+          ? JSON.stringify(value)
+          : String(value)}
+      </div>
+    </div>
+  );
+}
 
-// Mock data - replace with actual data fetching
-const mockApplications = {
-  participant: [
-    {
-      id: "1",
-      fullName: "John Doe",
-      email: "john@uci.edu",
-      status: "accepted",
-      submittedAt: "2025-03-20",
-      // Additional fields
-      major: "Computer Science",
-      year: "Junior",
-      experience: "I have experience in Python and JavaScript...",
-      whyJoin: "I want to learn more about data science...",
-      linkedIn: "https://linkedin.com/in/johndoe",
-      github: "https://github.com/johndoe",
-      resume: "https://example.com/resume.pdf",
-      dietaryRestrictions: "Vegetarian",
-      shirtSize: "M",
-    },
-    {
-      id: "2",
-      fullName: "Jane Doe",
-      email: "jane@uci.edu",
-      status: "draft",
-      submittedAt: "2025-03-20",
-      // Additional fields
-      major: "Computer Science",
-      year: "Junior",
-      experience: "I have experience in Python and JavaScript...",
-      whyJoin: "I want to learn more about data science...",
-      linkedIn: "https://linkedin.com/in/johndoe",
-      github: "https://github.com/johndoe",
-      resume: "https://example.com/resume.pdf",
-      dietaryRestrictions: "Vegetarian",
-      shirtSize: "M",
-    },
-  ],
-  mentor: [
-    /* ... */
-  ],
-  judge: [
-    /* ... */
-  ],
-  coordinator: [
-    /* ... */
-  ],
-} as const;
+function ApplicationDetails({
+  application,
+}: {
+  application: ParticipantApplication | JudgeApplication | MentorApplication;
+}) {
+  const excludedFields = ["id", "studentId"];
+
+  // Adjust primary fields based on application type
+  const getPrimaryFields = () => {
+    const commonFields = ["fullName", "university", "major", "educationLevel"];
+
+    if ("isFirstDatathon" in application) {
+      // Fields specific to ParticipantApplication
+      return [
+        ...commonFields,
+        "developmentGoals",
+        "comfortLevel",
+        "isFirstDatathon",
+        "hasTeam",
+      ];
+    } else if ("mentorshipAreas" in application) {
+      // Fields specific to MentorApplication
+      return [
+        ...commonFields,
+        "mentorshipAreas",
+        "previousMentorshipExperience",
+      ];
+    } else {
+      // Fields specific to JudgeApplication
+      return [...commonFields, "judgeExperience"];
+    }
+  };
+
+  const primaryFields = getPrimaryFields();
+
+  const fieldLabels: Record<string, string> = {
+    fullName: "Full Name",
+    createdAt: "Submitted At",
+    updatedAt: "Last Updated",
+    isFirstDatathon: "First Datathon",
+    comfortLevel: "Technical Comfort Level",
+    hasTeam: "Has Team",
+    educationLevel: "Year of Study",
+    attendanceConfirmed: "Attendance Confirmed",
+    dietaryRestrictions: "Dietary Restrictions",
+    developmentGoals: "Development Goals",
+    githubUrl: "GitHub Profile",
+    linkedinUrl: "LinkedIn Profile",
+  };
+
+  const formatValue = (key: string, value: unknown) => {
+    if (key === "createdAt" || key === "updatedAt") {
+      return formatDate(value as string);
+    }
+    if (key === "comfortLevel") {
+      return `${value as number}/5`;
+    }
+    return value;
+  };
+
+  const renderFields = (fields: string[]) => {
+    return fields.map(
+      (key) =>
+        application[key as keyof Application] && (
+          <ApplicationRow
+            key={key}
+            label={
+              fieldLabels[key] ||
+              key.charAt(0).toUpperCase() +
+                key.slice(1).replace(/([A-Z])/g, " $1")
+            }
+            value={formatValue(key, application[key as keyof Application])}
+          />
+        )
+    );
+  };
+
+  const secondaryFields = Object.keys(application).filter(
+    (key) => !excludedFields.includes(key) && !primaryFields.includes(key)
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <h2 className="text-xl font-outfit font-medium text-gray-900 mb-4">
+          Primary Information
+        </h2>
+        <div className="space-y-0">{renderFields(primaryFields)}</div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <h2 className="text-xl font-outfit font-medium text-gray-900 mb-4">
+          Additional Information
+        </h2>
+        <div className="space-y-0">{renderFields(secondaryFields)}</div>
+      </div>
+    </div>
+  );
+}
 
 export default async function ApplicationDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ type: string; id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
+  const { userId } = await auth();
+  if (!userId) redirect("/");
+  await requireAdmin(userId);
 
-  // Type guard to ensure type is valid
   const isValidType = (type: string): type is ApplicationType => {
-    return ["participant", "mentor", "judge", "coordinator"].includes(type);
+    return ["participant", "mentor", "judge"].includes(type);
   };
 
   if (!isValidType(resolvedParams.type)) {
     redirect("/dashboard/admin");
   }
-
-  const { userId } = await auth();
-  if (!userId) redirect("/");
-
-  // Replace the manual check with requireAdmin
-  await requireAdmin(userId);
-
-  console.log(resolvedSearchParams);
-
-  // Find the application
-  const application = mockApplications[resolvedParams.type]?.find(
-    (app) => app.id === resolvedParams.id
+  console.log("resolvedParams", resolvedParams);
+  const application = await getApplicationByStudentId(
+    resolvedParams.id,
+    resolvedParams.type
   );
-
+  console.log("application", application);
   if (!application) {
     redirect(`/dashboard/admin/applications/${resolvedParams.type}`);
   }
@@ -95,11 +165,15 @@ export default async function ApplicationDetailPage({
   const typeTitle =
     resolvedParams.type.charAt(0).toUpperCase() + resolvedParams.type.slice(1);
 
+  const typedApplication = application as
+    | ParticipantApplication
+    | JudgeApplication
+    | MentorApplication;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="space-y-8">
-          {/* Header */}
           <div>
             <Link
               href={`/dashboard/admin/applications/${resolvedParams.type}`}
@@ -110,176 +184,19 @@ export default async function ApplicationDetailPage({
                 Back to {typeTitle} Applications
               </span>
             </Link>
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-outfit font-light text-gray-900">
-                  Application Details
-                </h1>
-                <p className="mt-2 text-gray-600 font-chillax">
-                  Review application for {application.fullName}
-                </p>
-              </div>
-              <span
-                className={`px-4 py-2 rounded-full text-sm font-chillax ${
-                  application.status === "draft"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : application.status === "accepted"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {application.status.charAt(0).toUpperCase() +
-                  application.status.slice(1)}
-              </span>
-            </div>
+            <h1 className="text-3xl font-outfit font-light text-gray-900">
+              {typeTitle} Application Details
+            </h1>
           </div>
 
-          {/* Application Content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Basic Information */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-xl font-outfit mb-4">Basic Information</h2>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <User className="w-5 h-5 text-gray-400 mt-1" />
-                  <div>
-                    <p className="font-chillax text-gray-900">
-                      {application.fullName}
-                    </p>
-                    <p className="text-sm text-gray-600">Full Name</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-gray-400 mt-1" />
-                  <div>
-                    <p className="font-chillax text-gray-900">
-                      {application.email}
-                    </p>
-                    <p className="text-sm text-gray-600">Email</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <School className="w-5 h-5 text-gray-400 mt-1" />
-                  <div>
-                    <p className="font-chillax text-gray-900">
-                      {application.major}
-                    </p>
-                    <p className="text-sm text-gray-600">Major</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400 mt-1" />
-                  <div>
-                    <p className="font-chillax text-gray-900">
-                      {application.year}
-                    </p>
-                    <p className="text-sm text-gray-600">Year</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-gray-400 mt-1" />
-                  <div>
-                    <p className="font-chillax text-gray-900">
-                      {application.submittedAt}
-                    </p>
-                    <p className="text-sm text-gray-600">Submitted At</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {typedApplication && (
+            <ApplicationDetails application={typedApplication} />
+          )}
 
-            {/* Additional Information */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-xl font-outfit mb-4">
-                Additional Information
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-chillax text-gray-900">Experience</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {application.experience}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-chillax text-gray-900">Why Join?</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {application.whyJoin}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Links & Documents */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-xl font-outfit mb-4">Links & Documents</h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-chillax text-gray-900">LinkedIn</p>
-                  <a
-                    href={application.linkedIn}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-indigo-600 hover:text-indigo-800"
-                  >
-                    {application.linkedIn}
-                  </a>
-                </div>
-                <div>
-                  <p className="font-chillax text-gray-900">GitHub</p>
-                  <a
-                    href={application.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-indigo-600 hover:text-indigo-800"
-                  >
-                    {application.github}
-                  </a>
-                </div>
-                <div>
-                  <p className="font-chillax text-gray-900">Resume</p>
-                  <a
-                    href={application.resume}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-indigo-600 hover:text-indigo-800"
-                  >
-                    View Resume
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Event Details */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-xl font-outfit mb-4">Event Details</h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-chillax text-gray-900">
-                    Dietary Restrictions
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {application.dietaryRestrictions || "None"}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-chillax text-gray-900">T-Shirt Size</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {application.shirtSize}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-chillax">
-              Accept Application
-            </button>
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-chillax">
-              Reject Application
-            </button>
-          </div>
+          <RatingSystem
+            applicationId={typedApplication.id}
+            applicationRole={resolvedParams.type}
+          />
         </div>
       </div>
     </div>

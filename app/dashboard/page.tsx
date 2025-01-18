@@ -8,8 +8,9 @@ import {
   Book,
   ChevronRight,
 } from "lucide-react";
-import { getStudentWithDetails } from "@/app/lib/db/queries";
+import { getStudentWithDetails, getRating } from "@/app/lib/db/queries";
 import RoleSelector from "@/app/components/applications/components/RoleSelector";
+import WithdrawalSection from "@/app/components/applications/components/WithdrawalSection";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -20,6 +21,11 @@ export default async function DashboardPage() {
   const currentRole = studentData?.student.role || "participant";
 
   type Role = "participant" | "mentor" | "coordinator" | "judge";
+
+  // Get the review status if there's an application
+  const hasReview = studentData?.application?.id
+    ? await getRating(studentData.application.id)
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -35,6 +41,14 @@ export default async function DashboardPage() {
               {studentData?.application?.fullName ||
                 studentData?.student.firstName}
             </p>
+            {studentData?.application?.id && (
+              <p className="text-gray-500 font-chillax text-sm">
+                Your application ID is:{" "}
+                <span className="font-medium">
+                  {studentData?.application?.id}
+                </span>
+              </p>
+            )}
           </div>
 
           {/* Role Selector */}
@@ -57,18 +71,33 @@ export default async function DashboardPage() {
                         Not Started
                       </span>
                     </>
+                  ) : studentData.application.status === "accepted" ? (
+                    <>
+                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-400"></span>
+                      <span className="text-gray-600 font-chillax">
+                        Accepted
+                      </span>
+                    </>
+                  ) : studentData.application.status === "rejected" ? (
+                    <>
+                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                      <span className="text-gray-600 font-chillax">
+                        Rejected
+                      </span>
+                    </>
+                  ) : studentData.application.status === "submitted" &&
+                    hasReview ? (
+                    <>
+                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                      <span className="text-gray-600 font-chillax">
+                        Reviewed
+                      </span>
+                    </>
                   ) : studentData.application.status === "submitted" ? (
                     <>
                       <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
                       <span className="text-gray-600 font-chillax">
                         Pending Review
-                      </span>
-                    </>
-                  ) : studentData.application.status === "approved" ? (
-                    <>
-                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-400"></span>
-                      <span className="text-gray-600 font-chillax">
-                        Approved
                       </span>
                     </>
                   ) : (
@@ -83,6 +112,7 @@ export default async function DashboardPage() {
                 <Link
                   href="/dashboard/application"
                   className="inline-flex items-center mt-2 text-indigo-600 hover:text-indigo-700 transition-colors font-chillax"
+                  prefetch={true}
                 >
                   {!studentData?.application
                     ? "Start Application"
@@ -153,15 +183,19 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
-        {/* Development Info Section */}
-        <div className="my-8 p-4 bg-gray-100 rounded-lg">
-          <h2 className="text-lg font-semibold mb-4">
-            Development Information
-          </h2>
-          <pre className="bg-white p-4 rounded overflow-auto">
-            {JSON.stringify(studentData, null, 2)}
-          </pre>
+
+          {/* Add WithdrawalSection before Development Info */}
+          <WithdrawalSection application={studentData?.application} />
+
+          {/* Development Info Section */}
+          <div className="my-8 p-4 bg-gray-100 rounded-lg">
+            <h2 className="text-lg font-semibold mb-4">
+              Development Information
+            </h2>
+            <pre className="bg-white p-4 rounded overflow-auto">
+              {JSON.stringify(studentData, null, 2)}
+            </pre>
+          </div>
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   JudgeApplication,
   CoordinatorApplication,
 } from "@/app/components/applications";
+import LoadingSpinner from "@/app/components/applications/components/LoadingSpinner";
 
 type StudentData = {
   student: {
@@ -19,7 +20,7 @@ type StudentData = {
   };
 };
 
-export default function ApplicationPage() {
+function ApplicationContent() {
   const { user, isLoaded } = useUser();
   const [studentData, setStudentData] = useState<StudentData | null>(null);
 
@@ -33,6 +34,7 @@ export default function ApplicationPage() {
           }
           const data = await response.json();
           setStudentData(data);
+          console.log("found student in application page", data);
         } catch (error) {
           console.error("Error fetching student data:", error);
         }
@@ -46,12 +48,10 @@ export default function ApplicationPage() {
   }
 
   if (!studentData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
+
+  
 
   // Render the appropriate application component based on role
   switch (studentData.student.role) {
@@ -75,4 +75,8 @@ export default function ApplicationPage() {
         </div>
       );
   }
+}
+
+export default function ApplicationPage() {
+  return <ApplicationContent />;
 }
