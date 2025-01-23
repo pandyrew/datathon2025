@@ -85,11 +85,12 @@ export default function About() {
                 className="text-xl text-gray-700 font-chillax mb-16"
               >
                 Inspired by the Seven Wonders of the World, this year&apos;s
-                Datathon challenges participants to analyze and derive insights
-                from datasets related to world heritage sites, cultural
-                landmarks, and historical monuments. Join us in exploring how
-                data science can help preserve and understand humanity&apos;s
-                greatest achievements.
+                Datathon invites participants to embark on a journey of
+                discovery through data - much like how explorers uncover the
+                mysteries of these magnificent monuments. Just as each Wonder
+                tells a unique story, you&apos;ll learn to unravel the
+                narratives hidden within datasets through exploratory data
+                analysis.
               </motion.p>
             </div>
           </div>
