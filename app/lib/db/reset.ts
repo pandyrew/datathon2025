@@ -23,6 +23,8 @@ async function reset() {
         DROP TABLE IF EXISTS "judge_applications" CASCADE;
         DROP TABLE IF EXISTS "mentor_applications" CASCADE;
         DROP TABLE IF EXISTS "applications" CASCADE;
+        DROP TABLE IF EXISTS "ratings" CASCADE;
+        DROP TABLE IF EXISTS "users" CASCADE;
         DROP TABLE IF EXISTS "students" CASCADE;
         DROP TABLE IF EXISTS "teams" CASCADE;
         DROP TABLE IF EXISTS "sessions" CASCADE;
