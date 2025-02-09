@@ -4,15 +4,14 @@ import { getApplicationByStudentId } from "@/app/lib/db/queries";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { requireAdmin } from "@/app/lib/auth/adminCheck";
-import { ApplicationType } from "@/app/types/application";
+import { ApplicationType, Application } from "@/app/types/application";
 import { formatDate } from "@/app/lib/utils/formatDate";
-import { Application } from "@/app/types/application";
-import RatingSystem from "@/app/components/admin/RatingSystem";
 import {
   ParticipantApplication,
   JudgeApplication,
   MentorApplication,
 } from "@/app/types/application";
+import RatingSystem from "@/app/components/admin/RatingSystem";
 
 function ApplicationRow({ label, value }: { label: string; value: unknown }) {
   return (
@@ -165,10 +164,7 @@ export default async function ApplicationDetailPage({
   const typeTitle =
     resolvedParams.type.charAt(0).toUpperCase() + resolvedParams.type.slice(1);
 
-  const typedApplication = application as
-    | ParticipantApplication
-    | JudgeApplication
-    | MentorApplication;
+  const typedApplication = application as unknown as Application;
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,10 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getApplicationsByTypeAndStatus } from "@/app/lib/db/queries";
+import {
+  getApplicationsByTypeAndStatus,
+  ApplicationListItem,
+} from "@/app/lib/db/queries";
 import ApplicationSection from "@/app/components/admin/ApplicationSection";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { ApplicationType } from "@/app/types/application";
+import { ApplicationType, Application } from "@/app/types/application";
 import { requireAdmin } from "@/app/lib/auth/adminCheck";
 
 export default async function ApplicationTypePage({
@@ -21,6 +24,14 @@ export default async function ApplicationTypePage({
   const applications = await getApplicationsByTypeAndStatus(
     resolvedParams.type
   );
+
+  // Convert ApplicationListItem[] to Application[]
+  const typedApplications = applications.map((app: ApplicationListItem) => ({
+    ...app,
+    studentId: app.id, // Using id as studentId since it's required
+    updatedAt: app.submittedAt.toISOString(), // Using submittedAt as updatedAt
+    createdAt: app.submittedAt.toISOString(), // Using submittedAt as createdAt
+  })) as unknown as Application[];
 
   const typeTitle =
     resolvedParams.type.charAt(0).toUpperCase() + resolvedParams.type.slice(1);
@@ -48,7 +59,7 @@ export default async function ApplicationTypePage({
           <ApplicationSection
             title={`${typeTitle} Applications`}
             description={`Review and manage ${resolvedParams.type} applications`}
-            applications={applications}
+            applications={typedApplications}
             type={resolvedParams.type}
           />
         </div>

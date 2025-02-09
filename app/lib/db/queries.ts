@@ -8,7 +8,16 @@ import {
   ratings,
 } from "./schema";
 import { eq, sql, desc } from "drizzle-orm";
-import { ApplicationType, Application } from "@/app/types/application";
+import { ApplicationType } from "@/app/types/application";
+
+// Add this new interface for list view
+export interface ApplicationListItem {
+  id: string;
+  fullName: string;
+  email: string;
+  status: string;
+  submittedAt: Date;
+}
 
 export interface BaseApplication {
   id: string;
@@ -366,7 +375,7 @@ export async function getApplicationStats() {
 export async function getApplicationsByType(type: ApplicationType) {
   const db = await getConnection();
 
-  let applications: Application[] = [];
+  let applications: ApplicationListItem[] = [];
   switch (type) {
     case "participant":
       applications = await db
@@ -417,7 +426,7 @@ export async function getApplicationsByType(type: ApplicationType) {
 export async function getApplicationsByTypeAndStatus(type: ApplicationType) {
   const db = await getConnection();
 
-  let applications: Application[] = [];
+  let applications: ApplicationListItem[] = [];
   switch (type) {
     case "participant":
       applications = await db
