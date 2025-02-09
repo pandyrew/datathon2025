@@ -3,10 +3,10 @@
 import { getConnection } from "./db/drizzle";
 import { eq } from "drizzle-orm";
 import {
-  participantApplications,
-  judgeApplications,
-  students,
-  mentorApplications,
+  applications,
+  participantDetails,
+  mentorDetails,
+  judgeDetails,
 } from "./db/schema";
 
 type ParticipantStepData = {
@@ -54,7 +54,7 @@ type JudgeStepData = {
   };
 };
 
-function getParticipantStepKey(step: number): keyof ParticipantStepData {
+function getParticipantStepKey(step: number) {
   switch (step) {
     case 1:
       return "personal";
@@ -63,11 +63,11 @@ function getParticipantStepKey(step: number): keyof ParticipantStepData {
     case 3:
       return "final";
     default:
-      throw new Error(`Invalid step number: ${step}`);
+      return "unknown";
   }
 }
 
-function getJudgeStepKey(step: number): keyof JudgeStepData {
+function getJudgeStepKey(step: number) {
   switch (step) {
     case 1:
       return "basic";
@@ -76,7 +76,7 @@ function getJudgeStepKey(step: number): keyof JudgeStepData {
     case 3:
       return "links";
     default:
-      throw new Error(`Invalid step number: ${step}`);
+      return "unknown";
   }
 }
 
@@ -89,33 +89,34 @@ export async function updateApplicationData(
     const db = await getConnection();
 
     // First determine the role by checking which application exists
-    const participantApp = await db
+    const [application] = await db
       .select()
-      .from(participantApplications)
-      .where(eq(participantApplications.id, applicationId))
+      .from(applications)
+      .where(eq(applications.id, applicationId))
       .limit(1);
 
-    const mentorApp = await db
-      .select()
-      .from(mentorApplications)
-      .where(eq(mentorApplications.id, applicationId))
-      .limit(1);
+    if (!application) {
+      return {
+        success: false,
+        error: "Application not found",
+      };
+    }
 
-    const isParticipant = participantApp.length > 0;
-    const isMentor = mentorApp.length > 0;
-    let updateData: Record<string, string | number | boolean | string[]> = {};
+    let baseUpdateData: Record<string, any> = {};
+    let detailsUpdateData: Record<string, any> = {};
 
-    if (isParticipant) {
+    if (application.role === "participant") {
       const stepNumber = parseInt(step);
       const stepKey = getParticipantStepKey(stepNumber);
 
       switch (stepKey) {
         case "personal":
-          updateData = {
+          baseUpdateData = {
             fullName: data.get("fullName") as string,
-            gender: data.get("gender") as string,
             pronouns: data.get("pronouns") as string,
             pronounsOther: data.get("pronounsOther") as string,
+          };
+          detailsUpdateData = {
             university: data.get("university") as string,
             major: data.get("major") as string,
             educationLevel: data.get("year") as string,
@@ -123,66 +124,68 @@ export async function updateApplicationData(
           break;
 
         case "experience":
-          updateData = {
+          detailsUpdateData = {
             isFirstDatathon: data.get("firstTime") === "yes",
             comfortLevel: Number(data.get("comfort")),
             hasTeam: data.get("team") === "yes",
-            teammates: data.get("teammates") as string,
-            dietaryRestrictions: Array.from(data.getAll("dietary")).join(", "),
+          };
+          baseUpdateData = {
+            dietaryRestrictions: Array.from(data.getAll("dietary")),
           };
           break;
 
         case "final":
-          updateData = {
+          detailsUpdateData = {
             developmentGoals: data.get("development") as string,
+          };
+          baseUpdateData = {
             githubUrl: data.get("github") as string,
             linkedinUrl: data.get("linkedin") as string,
-            attendanceConfirmed: data.get("confirmation") === "on",
-            feedback: data.get("feedback") as string,
           };
           break;
       }
 
-      const [updated] = await db
-        .update(participantApplications)
+      await db
+        .update(applications)
         .set({
-          ...updateData,
+          ...baseUpdateData,
           updatedAt: new Date(),
         })
-        .where(eq(participantApplications.id, applicationId))
-        .returning();
+        .where(eq(applications.id, applicationId));
 
-      return { success: true, data: updated };
-    } else if (isMentor) {
+      await db
+        .update(participantDetails)
+        .set(detailsUpdateData)
+        .where(eq(participantDetails.applicationId, applicationId));
+
+    } else if (application.role === "mentor") {
       const stepNumber = parseInt(step);
-      const stepKey = stepNumber.toString();
 
-      switch (stepKey) {
-        case "1":
-          updateData = {
+      switch (stepNumber) {
+        case 1:
+          baseUpdateData = {
             fullName: data.get("fullName") as string,
             pronouns: data.get("pronouns") as string,
             pronounsOther: data.get("pronounsOther") as string,
+          };
+          detailsUpdateData = {
             affiliation: data.get("affiliation") as string,
           };
           break;
 
-        case "2":
-          updateData = {
-            programmingLanguages: data.getAll(
-              "programmingLanguages"
-            ) as string[],
+        case 2:
+          detailsUpdateData = {
+            programmingLanguages: data.getAll("programmingLanguages") as string[],
             comfortLevel: Number(data.get("comfortLevel")),
-            hasHackathonExperience:
-              data.get("hasHackathonExperience") === "true",
+            hasHackathonExperience: data.get("hasHackathonExperience") === "true",
             motivation: data.get("motivation") as string,
             mentorRoleDescription: data.get("mentorRoleDescription") as string,
             availability: data.get("availability") as string,
           };
           break;
 
-        case "3":
-          updateData = {
+        case 3:
+          baseUpdateData = {
             linkedinUrl: data.get("linkedin") as string,
             githubUrl: data.get("github") as string,
             websiteUrl: data.get("website") as string,
@@ -191,33 +194,37 @@ export async function updateApplicationData(
           break;
       }
 
-      const [updated] = await db
-        .update(mentorApplications)
+      await db
+        .update(applications)
         .set({
-          ...updateData,
+          ...baseUpdateData,
           updatedAt: new Date(),
         })
-        .where(eq(mentorApplications.id, applicationId))
-        .returning();
+        .where(eq(applications.id, applicationId));
 
-      return { success: true, data: updated };
-    } else {
-      // Judge application
+      await db
+        .update(mentorDetails)
+        .set(detailsUpdateData)
+        .where(eq(mentorDetails.applicationId, applicationId));
+
+    } else if (application.role === "judge") {
       const stepNumber = parseInt(step);
       const stepKey = getJudgeStepKey(stepNumber);
 
       switch (stepKey) {
         case "basic":
-          updateData = {
+          baseUpdateData = {
             fullName: data.get("fullName") as string,
             pronouns: data.get("pronouns") as string,
             pronounsOther: data.get("pronounsOther") as string,
+          };
+          detailsUpdateData = {
             affiliation: data.get("affiliation") as string,
           };
           break;
 
         case "experience":
-          updateData = {
+          detailsUpdateData = {
             experience: data.get("experience") as string,
             motivation: data.get("motivation") as string,
             feedbackComfort: Number(data.get("feedbackComfort")),
@@ -226,26 +233,35 @@ export async function updateApplicationData(
           break;
 
         case "links":
-          updateData = {
+          baseUpdateData = {
             linkedinUrl: data.get("linkedin") as string,
             githubUrl: data.get("github") as string,
             websiteUrl: data.get("website") as string,
-            feedback: data.get("feedback") as string,
           };
           break;
       }
 
-      const [updated] = await db
-        .update(judgeApplications)
+      await db
+        .update(applications)
         .set({
-          ...updateData,
+          ...baseUpdateData,
           updatedAt: new Date(),
         })
-        .where(eq(judgeApplications.id, applicationId))
-        .returning();
+        .where(eq(applications.id, applicationId));
 
-      return { success: true, data: updated };
+      await db
+        .update(judgeDetails)
+        .set(detailsUpdateData)
+        .where(eq(judgeDetails.applicationId, applicationId));
     }
+
+    const [updated] = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .limit(1);
+
+    return { success: true, data: updated };
   } catch (error) {
     console.error("Error updating application:", error);
     return {
@@ -255,65 +271,22 @@ export async function updateApplicationData(
   }
 }
 
-export async function submitApplication(studentId: string) {
-  console.log("Submitting application for student:", studentId);
+export async function submitApplication(applicationId: string) {
+  console.log("Submitting application:", applicationId);
 
   try {
     const db = await getConnection();
 
-    // First get the student to determine role
-    const [student] = await db
-      .select()
-      .from(students)
-      .where(eq(students.id, studentId))
-      .limit(1);
+    const [updated] = await db
+      .update(applications)
+      .set({
+        status: "submitted",
+        updatedAt: new Date(),
+      })
+      .where(eq(applications.id, applicationId))
+      .returning();
 
-    if (!student) {
-      return {
-        success: false,
-        error: "Student not found",
-      };
-    }
-
-    // Update the appropriate application based on role
-    if (student.role === "participant") {
-      const [updated] = await db
-        .update(participantApplications)
-        .set({
-          status: "submitted",
-          updatedAt: new Date(),
-        })
-        .where(eq(participantApplications.studentId, studentId))
-        .returning();
-
-      return { success: true, data: updated };
-    } else if (student.role === "judge") {
-      const [updated] = await db
-        .update(judgeApplications)
-        .set({
-          status: "submitted",
-          updatedAt: new Date(),
-        })
-        .where(eq(judgeApplications.studentId, studentId))
-        .returning();
-
-      return { success: true, data: updated };
-    } else if (student.role === "mentor") {
-      const [updated] = await db
-        .update(mentorApplications)
-        .set({
-          status: "submitted",
-          updatedAt: new Date(),
-        })
-        .where(eq(mentorApplications.studentId, studentId))
-        .returning();
-      return { success: true, data: updated };
-    }
-
-    return {
-      success: false,
-      error: "Invalid role",
-    };
+    return { success: true, data: updated };
   } catch (error) {
     console.error("Error submitting application:", error);
     return {

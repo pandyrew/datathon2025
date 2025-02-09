@@ -1,205 +1,151 @@
 import { getConnection } from "./drizzle";
 import {
-  participantApplications,
-  judgeApplications,
-  students,
+  applications,
+  participantDetails,
+  judgeDetails,
+  mentorDetails,
+  users,
   teams,
-  mentorApplications,
   ratings,
 } from "./schema";
 import { eq, sql, desc } from "drizzle-orm";
-import { ApplicationType, Application } from "@/app/types/application";
+import { ApplicationRole, Application } from "@/app/types/application";
 
-export interface BaseApplication {
-  id: string;
-  studentId: string;
-  status: string;
-  fullName: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ParticipantApplication extends BaseApplication {
-  gender: string | null;
-  pronouns: string | null;
-  pronounsOther: string | null;
-  university: string | null;
-  major: string | null;
-  educationLevel: string | null;
-  isFirstDatathon: boolean | null;
-  comfortLevel: number | null;
-  hasTeam: boolean | null;
-  teammates: string | null;
-  dietaryRestrictions: string | null;
-  developmentGoals: string | null;
-  githubUrl: string | null;
-  linkedinUrl: string | null;
-  attendanceConfirmed: boolean | null;
-  feedback: string | null;
-}
-
-export interface JudgeApplication extends BaseApplication {
-  pronouns: string | null;
-  pronounsOther: string | null;
-  affiliation: string | null;
-  experience: string | null;
-  motivation: string | null;
-  feedbackComfort: number | null;
-  availability: boolean | null;
-  linkedinUrl: string | null;
-  githubUrl: string | null;
-  websiteUrl: string | null;
-}
-
-export interface MentorApplication extends BaseApplication {
-  pronouns: string | null;
-  pronounsOther: string | null;
-  affiliation: string | null;
-  programmingLanguages: string[] | null;
-  comfortLevel: number | null;
-  hasHackathonExperience: boolean | null;
-  motivation: string | null;
-  mentorRoleDescription: string | null;
-  availability: string | null;
-  linkedinUrl: string | null;
-  githubUrl: string | null;
-  websiteUrl: string | null;
-  dietaryRestrictions: string[] | null;
-}
-
-export async function getApplicationByStudentId(
-  applicationId: string,
-  role: string
-): Promise<
-  ParticipantApplication | JudgeApplication | MentorApplication | null
-> {
+export async function getApplicationByUserId(
+  userId: string,
+  role: ApplicationRole
+) {
   const db = await getConnection();
 
+  const [application] = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.userId, userId))
+    .where(eq(applications.role, role))
+    .limit(1);
+
+  if (!application) return null;
+
+  let details = null;
   if (role === "participant") {
-    const result = await db
+    [details] = await db
       .select()
-      .from(participantApplications)
-      .where(eq(participantApplications.id, applicationId))
-      .limit(1);
-    return result[0] || null;
+      .from(participantDetails)
+      .where(eq(participantDetails.applicationId, application.id));
   } else if (role === "judge") {
-    const result = await db
+    [details] = await db
       .select()
-      .from(judgeApplications)
-      .where(eq(judgeApplications.id, applicationId))
-      .limit(1);
-    return result[0] || null;
+      .from(judgeDetails)
+      .where(eq(judgeDetails.applicationId, application.id));
   } else if (role === "mentor") {
-    const result = await db
+    [details] = await db
       .select()
-      .from(mentorApplications)
-      .where(eq(mentorApplications.id, applicationId))
-      .limit(1);
-    return result[0] || null;
+      .from(mentorDetails)
+      .where(eq(mentorDetails.applicationId, application.id));
   }
 
-  return null;
+  return {
+    ...application,
+    details,
+  };
 }
 
 export async function updateApplication(
-  studentId: string,
-  role: string,
-  data: Partial<ParticipantApplication | JudgeApplication | MentorApplication>
+  applicationId: string,
+  role: ApplicationRole,
+  data: Partial<Application>
 ) {
   const db = await getConnection();
 
-  if (role === "participant") {
-    const participantData = data as Partial<ParticipantApplication>;
-    const result = await db
-      .update(participantApplications)
-      .set({
-        ...participantData,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(eq(participantApplications.studentId, studentId))
-      .returning();
-    return result[0];
-  } else if (role === "judge") {
-    const judgeData = data as Partial<JudgeApplication>;
-    const result = await db
-      .update(judgeApplications)
-      .set({
-        ...judgeData,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(eq(judgeApplications.studentId, studentId))
-      .returning();
-    return result[0];
-  } else if (role === "mentor") {
-    const mentorData = data as Partial<MentorApplication>;
-    const result = await db
-      .update(mentorApplications)
-      .set({
-        ...mentorData,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(eq(mentorApplications.studentId, studentId))
-      .returning();
-    return result[0];
+  // Update base application data
+  const [updatedApplication] = await db
+    .update(applications)
+    .set({
+      ...data,
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+    })
+    .where(eq(applications.id, applicationId))
+    .returning();
+
+  // Update role-specific details
+  if (role === "participant" && data.details) {
+    await db
+      .update(participantDetails)
+      .set(data.details)
+      .where(eq(participantDetails.applicationId, applicationId));
+  } else if (role === "judge" && data.details) {
+    await db
+      .update(judgeDetails)
+      .set(data.details)
+      .where(eq(judgeDetails.applicationId, applicationId));
+  } else if (role === "mentor" && data.details) {
+    await db
+      .update(mentorDetails)
+      .set(data.details)
+      .where(eq(mentorDetails.applicationId, applicationId));
   }
+
+  return getApplicationByUserId(updatedApplication.userId, role);
 }
 
-export async function getAllApplications(role: string) {
+export async function getAllApplications(role: ApplicationRole) {
   const db = await getConnection();
+
+  const allApplications = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.role, role));
+
+  const applicationIds = allApplications.map((app) => app.id);
+
+  let details;
   if (role === "participant") {
-    return db.select().from(participantApplications);
+    details = await db
+      .select()
+      .from(participantDetails)
+      .where(sql`application_id = ANY(${applicationIds})`);
   } else if (role === "judge") {
-    return db.select().from(judgeApplications);
+    details = await db
+      .select()
+      .from(judgeDetails)
+      .where(sql`application_id = ANY(${applicationIds})`);
   } else if (role === "mentor") {
-    return db.select().from(mentorApplications);
+    details = await db
+      .select()
+      .from(mentorDetails)
+      .where(sql`application_id = ANY(${applicationIds})`);
   }
-  return [];
+
+  const detailsMap = new Map(details?.map((d) => [d.applicationId, d]));
+
+  return allApplications.map((app) => ({
+    ...app,
+    details: detailsMap.get(app.id) || null,
+  }));
 }
 
 export async function updateApplicationStatus(
-  studentId: string,
-  role: string,
-  status: "draft" | "pending" | "accepted" | "rejected"
+  applicationId: string,
+  status: "draft" | "submitted" | "accepted" | "rejected"
 ) {
   const db = await getConnection();
 
-  if (role === "participant") {
-    const result = await db
-      .update(participantApplications)
-      .set({
-        status,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(eq(participantApplications.studentId, studentId))
-      .returning();
-    return result[0];
-  } else if (role === "judge") {
-    const result = await db
-      .update(judgeApplications)
-      .set({
-        status,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(eq(judgeApplications.studentId, studentId))
-      .returning();
-    return result[0];
-  } else if (role === "mentor") {
-    const result = await db
-      .update(mentorApplications)
-      .set({
-        status,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(eq(mentorApplications.studentId, studentId))
-      .returning();
-    return result[0];
-  }
+  const [updatedApplication] = await db
+    .update(applications)
+    .set({
+      status,
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+    })
+    .where(eq(applications.id, applicationId))
+    .returning();
+
+  return updatedApplication;
 }
 
 export async function testConnection() {
   try {
     const db = await getConnection();
-    const result = await db.select().from(students).limit(1);
+    const result = await db.select().from(users).limit(1);
     console.log("Database connection successful:", result);
     return true;
   } catch (error) {
@@ -208,7 +154,7 @@ export async function testConnection() {
   }
 }
 
-export async function createStudent(data: {
+export async function createUser(data: {
   userId: string;
   email: string;
   firstName: string;
@@ -216,304 +162,165 @@ export async function createStudent(data: {
 }) {
   const db = await getConnection();
 
-  // Create student record
-  const [student] = await db
-    .insert(students)
+  const [user] = await db
+    .insert(users)
     .values({
       ...data,
     })
     .returning();
 
-  return { student };
+  return { user };
 }
 
-export async function getStudentWithDetails(userId: string) {
-  try {
-    const db = await getConnection();
+export async function getUserWithDetails(userId: string) {
+  const db = await getConnection();
 
-    // First get the student
-    const studentResult = await db
-      .select()
-      .from(students)
-      .where(eq(students.userId, userId))
-      .limit(1);
+  // Get the user
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.userId, userId))
+    .limit(1);
 
-    if (!studentResult.length) return null;
+  if (!user) return null;
 
-    const student = studentResult[0];
-    let application = null;
+  // Get all applications for this user
+  const userApplications = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.userId, user.id));
 
-    // Get the appropriate application based on role
-    if (student.role === "participant") {
-      const [participantApp] = await db
-        .select()
-        .from(participantApplications)
-        .where(eq(participantApplications.studentId, student.id))
-        .limit(1);
-      application = participantApp;
-    } else if (student.role === "judge") {
-      const [judgeApp] = await db
-        .select()
-        .from(judgeApplications)
-        .where(eq(judgeApplications.studentId, student.id))
-        .limit(1);
-      application = judgeApp;
-    } else if (student.role === "mentor") {
-      const [mentorApp] = await db
-        .select()
-        .from(mentorApplications)
-        .where(eq(mentorApplications.studentId, student.id))
-        .limit(1);
-      application = mentorApp;
+  // Get details for each application
+  const enrichedApplications = await Promise.all(
+    userApplications.map(async (app) => {
+      let details = null;
+      if (app.role === "participant") {
+        [details] = await db
+          .select()
+          .from(participantDetails)
+          .where(eq(participantDetails.applicationId, app.id));
+      } else if (app.role === "judge") {
+        [details] = await db
+          .select()
+          .from(judgeDetails)
+          .where(eq(judgeDetails.applicationId, app.id));
+      } else if (app.role === "mentor") {
+        [details] = await db
+          .select()
+          .from(mentorDetails)
+          .where(eq(mentorDetails.applicationId, app.id));
+      }
+
+      return {
+        ...app,
+        details,
+      };
+    })
+  );
+
+  return {
+    ...user,
+    applications: enrichedApplications,
+  };
+}
+
+export async function deleteApplications(userId: string) {
+  const db = await getConnection();
+
+  const userApplications = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.userId, userId));
+
+  for (const app of userApplications) {
+    if (app.role === "participant") {
+      await db
+        .delete(participantDetails)
+        .where(eq(participantDetails.applicationId, app.id));
+    } else if (app.role === "judge") {
+      await db
+        .delete(judgeDetails)
+        .where(eq(judgeDetails.applicationId, app.id));
+    } else if (app.role === "mentor") {
+      await db
+        .delete(mentorDetails)
+        .where(eq(mentorDetails.applicationId, app.id));
     }
-
-    // Get team if exists
-    let team = null;
-    if (student.teamId) {
-      const [teamResult] = await db
-        .select()
-        .from(teams)
-        .where(eq(teams.id, student.teamId))
-        .limit(1);
-      team = teamResult;
-    }
-
-    return {
-      student,
-      application,
-      team,
-    };
-  } catch (error) {
-    console.error("Error getting student details:", error);
-    throw new Error("Failed to get student details");
   }
-}
 
-export async function updateStudentRole(userId: string, role: string) {
-  const db = await getConnection();
-
-  return db
-    .update(students)
-    .set({ role })
-    .where(eq(students.userId, userId))
-    .returning();
-}
-
-export async function deleteApplications(studentId: string) {
-  const db = await getConnection();
-
-  // Delete from both application tables
-  await db
-    .delete(participantApplications)
-    .where(eq(participantApplications.studentId, studentId));
-
-  await db
-    .delete(judgeApplications)
-    .where(eq(judgeApplications.studentId, studentId));
-
-  await db
-    .delete(mentorApplications)
-    .where(eq(mentorApplications.studentId, studentId));
-
-  return true;
+  await db.delete(applications).where(eq(applications.userId, userId));
 }
 
 export async function getApplicationStats() {
   const db = await getConnection();
 
-  try {
-    // Get participant applications count with status breakdown
-    const participantStats = await db
-      .select({
-        total: sql`count(*)::int`,
-        submitted: sql`count(case when status = 'submitted' then 1 end)::int`,
-        accepted: sql`count(case when status = 'accepted' then 1 end)::int`,
-        rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
-      })
-      .from(participantApplications);
+  const allApplications = await db.select().from(applications);
 
-    // Get mentor applications count
-    const mentorStats = await db
-      .select({
-        total: sql`count(*)::int`,
-        submitted: sql`count(case when status = 'submitted' then 1 end)::int`,
-        accepted: sql`count(case when status = 'accepted' then 1 end)::int`,
-        rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
-      })
-      .from(mentorApplications);
+  const stats = {
+    total: allApplications.length,
+    participant: {
+      total: 0,
+      submitted: 0,
+      accepted: 0,
+      rejected: 0,
+    },
+    mentor: {
+      total: 0,
+      submitted: 0,
+      accepted: 0,
+      rejected: 0,
+    },
+    judge: {
+      total: 0,
+      submitted: 0,
+      accepted: 0,
+      rejected: 0,
+    },
+  };
 
-    // Get judge applications count
-    const judgeStats = await db
-      .select({
-        total: sql`count(*)::int`,
-        submitted: sql`count(case when status = 'submitted' then 1 end)::int`,
-        accepted: sql`count(case when status = 'accepted' then 1 end)::int`,
-        rejected: sql`count(case when status = 'rejected' then 1 end)::int`,
-      })
-      .from(judgeApplications);
+  allApplications.forEach((app) => {
+    stats[app.role].total++;
+    if (app.status === "submitted") stats[app.role].submitted++;
+    if (app.status === "accepted") stats[app.role].accepted++;
+    if (app.status === "rejected") stats[app.role].rejected++;
+  });
 
-    return {
-      participant: participantStats[0],
-      mentor: mentorStats[0],
-      judge: judgeStats[0],
-    };
-  } catch (error) {
-    console.error("Error getting application stats:", error);
-    throw new Error("Failed to get application statistics");
-  }
-}
-
-export async function getApplicationsByType(type: ApplicationType) {
-  const db = await getConnection();
-
-  let applications: Application[] = [];
-  switch (type) {
-    case "participant":
-      applications = await db
-        .select({
-          id: participantApplications.id,
-          fullName: sql<string>`COALESCE(${participantApplications.fullName}, '')`,
-          email: students.email,
-          status: participantApplications.status,
-          submittedAt: participantApplications.updatedAt,
-        })
-        .from(participantApplications)
-        .innerJoin(
-          students,
-          eq(students.id, participantApplications.studentId)
-        );
-      break;
-    case "mentor":
-      applications = await db
-        .select({
-          id: mentorApplications.id,
-          fullName: sql<string>`COALESCE(${mentorApplications.fullName}, '')`,
-          email: students.email,
-          status: mentorApplications.status,
-          submittedAt: mentorApplications.updatedAt,
-        })
-        .from(mentorApplications)
-        .innerJoin(students, eq(students.id, mentorApplications.studentId));
-      break;
-    case "judge":
-      applications = await db
-        .select({
-          id: judgeApplications.id,
-          fullName: sql<string>`COALESCE(${judgeApplications.fullName}, '')`,
-          email: students.email,
-          status: judgeApplications.status,
-          submittedAt: judgeApplications.updatedAt,
-        })
-        .from(judgeApplications)
-        .innerJoin(students, eq(students.id, judgeApplications.studentId));
-      break;
-    default:
-      applications = [];
-  }
-
-  return applications;
-}
-
-export async function getApplicationsByTypeAndStatus(type: ApplicationType) {
-  const db = await getConnection();
-
-  let applications: Application[] = [];
-  switch (type) {
-    case "participant":
-      applications = await db
-        .select({
-          id: participantApplications.id,
-          fullName: sql<string>`COALESCE(${participantApplications.fullName}, '')`,
-          email: students.email,
-          status: participantApplications.status,
-          submittedAt: participantApplications.updatedAt,
-        })
-        .from(participantApplications)
-        .innerJoin(students, eq(students.id, participantApplications.studentId))
-        .where(
-          sql`${participantApplications.status} IN ('submitted', 'accepted', 'rejected')`
-        );
-      break;
-    case "mentor":
-      applications = await db
-        .select({
-          id: mentorApplications.id,
-          fullName: sql<string>`COALESCE(${mentorApplications.fullName}, '')`,
-          email: students.email,
-          status: mentorApplications.status,
-          submittedAt: mentorApplications.updatedAt,
-        })
-        .from(mentorApplications)
-        .innerJoin(students, eq(students.id, mentorApplications.studentId))
-        .where(
-          sql`${mentorApplications.status} IN ('submitted', 'accepted', 'rejected')`
-        );
-      break;
-    case "judge":
-      applications = await db
-        .select({
-          id: judgeApplications.id,
-          fullName: sql<string>`COALESCE(${judgeApplications.fullName}, '')`,
-          email: students.email,
-          status: judgeApplications.status,
-          submittedAt: judgeApplications.updatedAt,
-        })
-        .from(judgeApplications)
-        .innerJoin(students, eq(students.id, judgeApplications.studentId))
-        .where(
-          sql`${judgeApplications.status} IN ('submitted', 'accepted', 'rejected')`
-        );
-      break;
-    default:
-      applications = [];
-  }
-
-  return applications;
+  return stats;
 }
 
 export async function addRating(data: {
   applicationId: string;
-  applicationRole: string;
   score: number;
   feedback?: string;
   ratedBy: string;
 }) {
   const db = await getConnection();
 
-  const result = await db
-    .insert(ratings)
-    .values({
-      ...data,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .returning();
+  const [rating] = await db.insert(ratings).values(data).returning();
 
-  return result[0];
+  return rating;
 }
 
 export async function getRating(applicationId: string) {
   const db = await getConnection();
 
-  const result = await db
+  const [rating] = await db
     .select()
     .from(ratings)
     .where(eq(ratings.applicationId, applicationId))
-    .orderBy(desc(ratings.createdAt))
     .limit(1);
 
-  return result[0] || null;
+  return rating || null;
 }
 
 export async function getAllRatings(applicationId: string) {
   const db = await getConnection();
 
-  const result = await db
+  return db
     .select()
     .from(ratings)
     .where(eq(ratings.applicationId, applicationId))
     .orderBy(desc(ratings.createdAt));
-
-  return result;
 }
 
 export async function deleteRating(ratingId: string) {
@@ -530,14 +337,11 @@ export async function updateRating(
 ) {
   const db = await getConnection();
 
-  const result = await db
+  const [rating] = await db
     .update(ratings)
-    .set({
-      ...data,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
+    .set(data)
     .where(eq(ratings.id, ratingId))
     .returning();
 
-  return result[0];
+  return rating;
 }

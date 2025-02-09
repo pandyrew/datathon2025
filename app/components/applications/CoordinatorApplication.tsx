@@ -2,7 +2,7 @@ import { useUser } from "@clerk/nextjs";
 import { redirect, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { updateApplicationData, submitApplication } from "@/app/lib/actions";
-import LoadingSpinner from './components/LoadingSpinner';
+import LoadingSpinner from "./components/LoadingSpinner";
 
 type StudentData = {
   student: {
@@ -61,7 +61,9 @@ export default function CoordinatorApplication() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-medium text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">You must be a coordinator to access this application.</p>
+          <p className="mt-2 text-gray-600">
+            You must be a coordinator to access this application.
+          </p>
         </div>
       </div>
     );
@@ -114,7 +116,10 @@ export default function CoordinatorApplication() {
                   type="text"
                   id="fullName"
                   name="fullName"
-                  defaultValue={studentData.application.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
+                  defaultValue={
+                    studentData.application.fullName ||
+                    `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                   required
                 />
@@ -237,4 +242,4 @@ export default function CoordinatorApplication() {
       </div>
     </div>
   );
-} 
+}

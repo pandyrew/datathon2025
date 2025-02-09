@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BaseApplication } from "@/app/lib/db/queries";
+import { BaseApplication } from "@/app/types/application";
 import { useRouter } from "next/navigation";
 
 interface WithdrawalSectionProps {

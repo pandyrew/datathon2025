@@ -24,7 +24,7 @@ export default function StatsBox({ label, value, delay = 0 }: StatsBoxProps) {
         delay: delay,
         ease: [0.21, 0.47, 0.32, 0.98],
       }}
-      className="border border-gray-300 p-6 h-[300px] flex flex-col justify-between"
+      className="border border-gray-300 p-6 h-[300px] flex flex-col justify-between bg-white/90"
     >
       <p className="text-sm uppercase tracking-wider text-gray-500 mb-4 font-outfit">
         {label}

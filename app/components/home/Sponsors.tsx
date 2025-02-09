@@ -3,13 +3,20 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
+import { Blob } from "../ui/Blob";
 
 export default function Sponsors() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="sponsors" className="min-h-[500px] bg-white py-32 px-6">
+    <section className="relative min-h-[80vh] bg-white/90 py-32 px-6 overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden z-[5]">
+        <Blob className="bg-amber-200/30 top-[10%] right-[15%] w-[400px] h-[400px] animate-delay-3000" />
+        <Blob className="bg-blue-200/30 bottom-[20%] left-[10%] w-[450px] h-[450px] animate-delay-5000" />
+      </div>
+
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-[200px,1fr] gap-12">
           {/* Left side - Label */}
@@ -23,7 +30,7 @@ export default function Sponsors() {
           </div>
 
           {/* Right side - Content */}
-          <div className="space-y-24">
+          <div className="space-y-24 z-[10]">
             {/* Past Sponsors */}
             {/* <motion.div
               ref={logosRef}

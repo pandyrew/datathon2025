@@ -4,38 +4,30 @@ import { useUser } from "@clerk/nextjs";
 import { redirect, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
-type StudentData = {
-  student: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-  };
-};
-
 export default function WelcomePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    async function checkStudent() {
+    async function checkApplicationStatus() {
       if (user?.id) {
         try {
-          const response = await fetch(`/api/students/${user.id}`);
+          // First check if user has any applications
+          const response = await fetch("/api/applications/check");
           if (response.ok) {
-            const data: StudentData = await response.json();
-            // If they already have a role set, redirect to dashboard
-            if (data.student.role) {
+            const data = await response.json();
+            // If they have an application, redirect to dashboard
+            if (data.hasApplication) {
               router.push("/dashboard");
             }
           }
         } catch (error) {
-          console.error("Error checking student:", error);
+          console.error("Error checking application status:", error);
         }
       }
     }
-    checkStudent();
+    checkApplicationStatus();
   }, [user?.id, router]);
 
   if (isLoaded && !user) {
@@ -45,7 +37,6 @@ export default function WelcomePage() {
   const handleRoleSelect = async (role: string) => {
     setIsLoading(true);
     try {
-      console.log("role", role);
       const response = await fetch("/api/user/role", {
         method: "PUT",
         headers: {
@@ -55,12 +46,14 @@ export default function WelcomePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update role");
+        const errorData = await response.json();
+        console.error("Server error:", errorData);
+        throw new Error(errorData.error || "Failed to create application");
       }
 
       router.push("/dashboard");
     } catch (error) {
-      console.error("Error updating role in WelcomePage 60:", error);
+      console.error("Error creating application:", error);
       setIsLoading(false);
     }
   };

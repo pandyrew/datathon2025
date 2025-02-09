@@ -7,31 +7,32 @@ import { updateApplicationData, submitApplication } from "@/app/lib/actions";
 import LoadingSpinner from "./components/LoadingSpinner";
 import MentorWelcome from "./components/MentorWelcome";
 
-type StudentData = {
-  student: {
+type UserData = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  applications: Array<{
     id: string;
-    firstName: string;
-    lastName: string;
     role: string;
-  };
-  application: {
-    id: string;
     status: string;
     fullName?: string;
     pronouns?: string;
     pronounsOther?: string;
-    affiliation?: string;
-    programmingLanguages?: string[];
-    comfortLevel?: number;
-    hasHackathonExperience?: boolean;
-    motivation?: string;
-    mentorRoleDescription?: string;
-    availability?: string;
     linkedinUrl?: string;
     githubUrl?: string;
     websiteUrl?: string;
     dietaryRestrictions?: string[];
-  };
+    details?: {
+      affiliation?: string;
+      programmingLanguages?: string[];
+      comfortLevel?: number;
+      hasHackathonExperience?: boolean;
+      motivation?: string;
+      mentorRoleDescription?: string;
+      availability?: string;
+    };
+  }>;
 };
 
 type MentorFormData = {
@@ -92,11 +93,10 @@ async function saveAndContinue(
 export default function MentorApplication() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [studentData, setStudentData] = useState<StudentData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [showPronounsOther, setShowPronounsOther] = useState(false);
-  const totalSteps = 4;
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<MentorFormData>({
     fullName: "",
     pronouns: "",
@@ -115,56 +115,59 @@ export default function MentorApplication() {
   });
 
   useEffect(() => {
-    async function fetchStudentData() {
+    async function fetchUserData() {
       if (user?.id) {
         try {
-          const response = await fetch(`/api/students/${user.id}`);
+          const response = await fetch(`/api/users/${user.id}`);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           const data = await response.json();
-          setStudentData(data);
-          setShowPronounsOther(data?.application?.pronouns === "other");
+          setUserData(data);
 
-          if (data.application) {
+          const mentorApp = data.applications?.find(
+            (app: any) => app.role === "mentor"
+          );
+          if (mentorApp) {
+            setShowPronounsOther(mentorApp.pronouns === "other");
             setFormData({
               fullName:
-                data.application.fullName ||
+                mentorApp.fullName ||
                 `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
-              pronouns: data.application.pronouns || "",
-              pronounsOther: data.application.pronounsOther || "",
-              affiliation: data.application.affiliation || "",
-              programmingLanguages: data.application.programmingLanguages || [],
-              comfortLevel: data.application.comfortLevel?.toString() || "3",
+              pronouns: mentorApp.pronouns || "",
+              pronounsOther: mentorApp.pronounsOther || "",
+              affiliation: mentorApp.details?.affiliation || "",
+              programmingLanguages: mentorApp.details?.programmingLanguages || [],
+              comfortLevel: mentorApp.details?.comfortLevel?.toString() || "3",
               hasHackathonExperience:
-                data.application.hasHackathonExperience || false,
-              motivation: data.application.motivation || "",
+                mentorApp.details?.hasHackathonExperience || false,
+              motivation: mentorApp.details?.motivation || "",
               mentorRoleDescription:
-                data.application.mentorRoleDescription || "",
-              availability: data.application.availability || "",
-              linkedinUrl: data.application.linkedinUrl || "",
-              githubUrl: data.application.githubUrl || "",
-              websiteUrl: data.application.websiteUrl || "",
-              dietaryRestrictions: data.application.dietaryRestrictions || [],
+                mentorApp.details?.mentorRoleDescription || "",
+              availability: mentorApp.details?.availability || "",
+              linkedinUrl: mentorApp.linkedinUrl || "",
+              githubUrl: mentorApp.githubUrl || "",
+              websiteUrl: mentorApp.websiteUrl || "",
+              dietaryRestrictions: mentorApp.dietaryRestrictions || [],
             });
           }
         } catch (error) {
-          console.error("Error fetching student data:", error);
+          console.error("Error fetching user data:", error);
         }
       }
     }
-    fetchStudentData();
+    fetchUserData();
   }, [user?.id, user?.firstName, user?.lastName]);
 
   if (isLoaded && !user) {
     redirect("/");
   }
 
-  if (!studentData) {
+  if (!userData) {
     return <LoadingSpinner />;
   }
 
-  if (studentData.student.role !== "mentor") {
+  if (userData.applications.find((app: any) => app.role === "mentor") === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -178,13 +181,13 @@ export default function MentorApplication() {
   }
 
   const nextStep = () => {
-    if (currentStep < totalSteps - 1) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const prevStep = () => {
-    if (currentStep > 0) {
+    if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -226,7 +229,7 @@ export default function MentorApplication() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsLoading(true);
 
     try {
       const formDataToSubmit = new FormData();
@@ -238,17 +241,17 @@ export default function MentorApplication() {
         }
       });
 
-      if (currentStep < totalSteps - 1) {
+      if (currentStep < 4) {
         await saveAndContinue(
           formData,
-          studentData!.application.id,
+          userData.applications.find((app: any) => app.role === "mentor")?.id || "",
           currentStep,
           setCurrentStep,
-          setIsSubmitting
+          setIsLoading
         );
       } else {
         const saveResult = await updateApplicationData(
-          studentData!.application.id,
+          userData.applications.find((app: any) => app.role === "mentor")?.id || "",
           currentStep.toString(),
           formDataToSubmit
         );
@@ -259,7 +262,7 @@ export default function MentorApplication() {
         }
 
         await new Promise((resolve) => setTimeout(resolve, 500));
-        const submitResult = await submitApplication(studentData!.student.id);
+        const submitResult = await submitApplication(userData.id);
 
         if (!submitResult.success) {
           console.error("Failed to submit application:", submitResult.error);
@@ -272,7 +275,7 @@ export default function MentorApplication() {
     } catch (error) {
       console.error("Form submission error:", error);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -324,13 +327,13 @@ export default function MentorApplication() {
             onSubmit={handleSubmit}
             className="bg-white p-6 rounded-lg shadow-sm border border-gray-100"
           >
-            {currentStep === 0 ? (
+            {currentStep === 1 ? (
               <MentorWelcome
                 nextStep={nextStep}
-                isSubmitted={studentData.application.status === "submitted"}
+                isSubmitted={userData.applications.find((app: any) => app.role === "mentor")?.status === "submitted"}
               />
             ) : (
-              currentStep === 1 && (
+              currentStep === 2 && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-outfit mb-4">
                     Basic Information
@@ -414,7 +417,7 @@ export default function MentorApplication() {
               )
             )}
 
-            {currentStep === 2 && (
+            {currentStep === 3 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-outfit mb-4">
                   Additional Questions
@@ -618,7 +621,7 @@ export default function MentorApplication() {
               </div>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 4 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-outfit mb-4">
                   External Links & Preferences
@@ -735,24 +738,22 @@ export default function MentorApplication() {
                 <button
                   type="button"
                   onClick={prevStep}
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                   className="bg-gray-100 text-gray-600 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors font-chillax disabled:opacity-50"
                 >
                   Previous
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                   className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors font-chillax disabled:opacity-50 flex items-center gap-2"
                 >
-                  {isSubmitting ? (
+                  {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      {currentStep < totalSteps - 1
-                        ? "Saving..."
-                        : "Submitting..."}
+                      {currentStep < 4 ? "Saving..." : "Submitting..."}
                     </>
-                  ) : currentStep < totalSteps - 1 ? (
+                  ) : currentStep < 4 ? (
                     "Next"
                   ) : (
                     "Submit Application"

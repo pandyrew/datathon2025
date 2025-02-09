@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
+import { Blob } from "../ui/Blob";
+import { Corner } from "../ui/Corner";
 
 export default function About() {
   const ref = useRef(null);
@@ -12,7 +14,22 @@ export default function About() {
   const words = text.split(" ");
 
   return (
-    <section id="about" className="min-h-screen bg-slate-100 py-32 px-6">
+    <section
+      id="about"
+      className="relative min-h-screen bg-slate-100/90 py-32 px-6 overflow-hidden"
+    >
+      {/* Decorative Corners */}
+      <Corner className="top-0 left-0" />
+      <Corner className="top-0 right-0 rotate-90" />
+      <Corner className="bottom-0 left-0 -rotate-90" />
+      <Corner className="bottom-0 right-0 rotate-180" />
+
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden z-[5]">
+        <Blob className="bg-blue-200/30 top-[5%] -left-[10%] w-[400px] h-[400px] animate-delay-2000" />
+        <Blob className="bg-purple-200/30 bottom-[20%] right-[5%] w-[500px] h-[500px] animate-delay-4000" />
+      </div>
+
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-[200px,1fr] gap-12">
           {/* Left side - Label */}
@@ -26,7 +43,7 @@ export default function About() {
           </div>
 
           {/* Right side - Content */}
-          <div className="space-y-16">
+          <div className="space-y-16 z-[10]">
             <motion.h2
               ref={ref}
               className="text-4xl md:text-6xl lg:text-7xl font-outfit font-light leading-tight max-w-4xl text-gray-900"
@@ -64,12 +81,12 @@ export default function About() {
                 }}
                 className="text-xl text-gray-700 mb-7 font-chillax"
               >
-                Datathon is UCI&apos;s premier data science competition where
-                students work in teams to solve real-world problems using data
-                analytics and machine learning. Over the course of 36 hours,
-                participants will have the opportunity to work with unique
-                datasets, receive mentorship from industry professionals, and
-                compete for prizes.
+                Soar Into Data is UCI&apos;s premier data science competition
+                where students work in teams to solve real-world problems using
+                data analytics and machine learning. Over the course of 36
+                hours, participants will have the opportunity to work with
+                unique datasets, receive mentorship from industry professionals,
+                and compete for prizes.
               </motion.p>
 
               <motion.p

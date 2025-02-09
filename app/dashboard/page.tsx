@@ -8,7 +8,7 @@ import {
   Book,
   ChevronRight,
 } from "lucide-react";
-import { getStudentWithDetails, getRating } from "@/app/lib/db/queries";
+import { getUserWithDetails, getRating } from "@/app/lib/db/queries";
 import RoleSelector from "@/app/components/applications/components/RoleSelector";
 import WithdrawalSection from "@/app/components/applications/components/WithdrawalSection";
 
@@ -17,14 +17,21 @@ export default async function DashboardPage() {
   if (!userId) redirect("/");
 
   console.log("userId", userId);
-  const studentData = await getStudentWithDetails(userId);
-  const currentRole = studentData?.student.role || "participant";
+  const userData = await getUserWithDetails(userId);
+  if (!userData) redirect("/");
+
+  // Get the current role from the most recent application
+  const currentRole =
+    userData.applications.length > 0
+      ? userData.applications[0].role
+      : "participant";
 
   type Role = "participant" | "mentor" | "coordinator" | "judge";
 
   // Get the review status if there's an application
-  const hasReview = studentData?.application?.id
-    ? await getRating(studentData.application.id)
+  const latestApplication = userData.applications[0];
+  const hasReview = latestApplication?.id
+    ? await getRating(latestApplication.id)
     : null;
 
   return (
@@ -38,15 +45,13 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-2 text-gray-600 font-chillax">
               Welcome to your Datathon dashboard,{" "}
-              {studentData?.application?.fullName ||
-                studentData?.student.firstName}
+              {latestApplication?.fullName ||
+                `${userData.firstName} ${userData.lastName}`}
             </p>
-            {studentData?.application?.id && (
+            {latestApplication?.id && (
               <p className="text-gray-500 font-chillax text-sm">
                 Your application ID is:{" "}
-                <span className="font-medium">
-                  {studentData?.application?.id}
-                </span>
+                <span className="font-medium">{latestApplication.id}</span>
               </p>
             )}
           </div>
@@ -64,36 +69,35 @@ export default async function DashboardPage() {
               </div>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  {!studentData?.application ? (
+                  {!latestApplication ? (
                     <>
                       <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
                       <span className="text-gray-600 font-chillax">
                         Not Started
                       </span>
                     </>
-                  ) : studentData.application.status === "accepted" ? (
+                  ) : latestApplication.status === "accepted" ? (
                     <>
                       <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-400"></span>
                       <span className="text-gray-600 font-chillax">
                         Accepted
                       </span>
                     </>
-                  ) : studentData.application.status === "rejected" ? (
+                  ) : latestApplication.status === "rejected" ? (
                     <>
                       <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
                       <span className="text-gray-600 font-chillax">
                         Rejected
                       </span>
                     </>
-                  ) : studentData.application.status === "submitted" &&
-                    hasReview ? (
+                  ) : latestApplication.status === "submitted" && hasReview ? (
                     <>
                       <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-400"></span>
                       <span className="text-gray-600 font-chillax">
                         Reviewed
                       </span>
                     </>
-                  ) : studentData.application.status === "submitted" ? (
+                  ) : latestApplication.status === "submitted" ? (
                     <>
                       <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
                       <span className="text-gray-600 font-chillax">
@@ -114,7 +118,7 @@ export default async function DashboardPage() {
                   className="inline-flex items-center mt-2 text-indigo-600 hover:text-indigo-700 transition-colors font-chillax"
                   prefetch={true}
                 >
-                  {!studentData?.application
+                  {!latestApplication
                     ? "Start Application"
                     : "View/Edit Application"}
                   <ChevronRight className="w-4 h-4 ml-1" />
@@ -185,7 +189,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Add WithdrawalSection before Development Info */}
-          <WithdrawalSection application={studentData?.application} />
+          <WithdrawalSection application={latestApplication} />
 
           {/* Development Info Section */}
           <div className="my-8 p-4 bg-gray-100 rounded-lg">
@@ -193,7 +197,7 @@ export default async function DashboardPage() {
               Development Information
             </h2>
             <pre className="bg-white p-4 rounded overflow-auto">
-              {JSON.stringify(studentData, null, 2)}
+              {JSON.stringify(userData, null, 2)}
             </pre>
           </div>
         </div>

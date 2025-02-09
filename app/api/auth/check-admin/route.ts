@@ -1,4 +1,4 @@
-import { getStudentWithDetails } from "@/app/lib/db/queries";
+import { getUserWithDetails } from "@/app/lib/db/queries";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "").split(",");
 
@@ -11,8 +11,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const studentData = await getStudentWithDetails(userId);
-    const isAdmin = ADMIN_EMAILS.includes(studentData?.student.email || "");
+    const userData = await getUserWithDetails(userId);
+    const isAdmin = ADMIN_EMAILS.includes(userData?.email || "");
     
     return new Response(JSON.stringify({ isAdmin }), {
       headers: { "Content-Type": "application/json" },

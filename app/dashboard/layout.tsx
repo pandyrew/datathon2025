@@ -27,35 +27,50 @@ export default function DashboardLayout({
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    async function checkStudent() {
+    async function checkAccess() {
       if (user?.id) {
         try {
-          const response = await fetch(`/api/students/${user.id}`);
-          if (!response.ok) {
+          // First check if user has a student record
+          const studentResponse = await fetch(`/api/students/${user.id}`);
+          if (!studentResponse.ok) {
             redirect("/welcome");
             return;
           }
 
-          const data: StudentData = await response.json();
-          if (!data.student.role) {
+          const studentData: StudentData = await studentResponse.json();
+          if (!studentData.student.role) {
             redirect("/welcome");
+            return;
           }
 
-          // Check admin status through API
+          // Then check if they have an application
+          const applicationResponse = await fetch("/api/applications/check");
+          if (!applicationResponse.ok) {
+            redirect("/welcome");
+            return;
+          }
+
+          const applicationData = await applicationResponse.json();
+          if (!applicationData.hasApplication) {
+            redirect("/welcome");
+            return;
+          }
+
+          // Check admin status
           const adminCheckResponse = await fetch(
             `/api/auth/check-admin?userId=${user.id}`
           );
           const adminData = await adminCheckResponse.json();
           setIsAdmin(adminData.isAdmin);
         } catch (error) {
-          console.error("Error checking student:", error);
+          console.error("Error checking access:", error);
           redirect("/welcome");
         } finally {
           setIsChecking(false);
         }
       }
     }
-    checkStudent();
+    checkAccess();
   }, [user?.id]);
 
   if (isLoaded && !user) {

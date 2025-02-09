@@ -1,0 +1,222 @@
+---
+title: "Lecture 8"
+author: "Ana Maria Kenney"
+format:
+  html:
+    embed-resources: true
+    code-fold: true
+---
+
+## Review from last time
+-   We have $g(\mu_i) = logit(\mu_i)=log(\frac{\mu_i}{1-\mu_i}) = \beta_0 + \beta_1X_i$
+-   This implies the odds are: $$\frac{\mu_i}{1-\mu_i} = e^{\beta_0 + \beta_1X_i}$$
+-   Take $\mu_1$ and $\mu_2$ such that $mu_2$ is for a population unit that has one more unit of $X$ than that of $\mu_1$
+-   Then we have $log(\frac{\mu_2}{1-\mu_2})-log(\frac{\mu_1}{1-\mu_1}) = \beta_1$
+
+::: {.callout-note icon="false" collapse="true"}
+## Why?
+
+$log(\frac{\mu_2}{1-\mu_2}) = \beta_0 + \beta_1(X+1)$
+$log(\frac{\mu_1}{1-\mu_1}) = \beta_0 + \beta_1(X)$
+:::
+
+-   Then $log\left(\frac{\frac{\mu_2}{1-\mu_2}}{\frac{\mu_1}{1-\mu_1}}\right) = \beta_1$
+-   We have $\frac{\frac{\mu_2}{1-\mu_2}}{\frac{\mu_1}{1-\mu_1}} = e^{\beta_1}$
+-   Now $e^{\beta_1}$ is the relative change in the odds ratio (how many times the bottom odds the top odds is equal to).
+-   The numerator odds is $e^{\beta_1}$ times that of the denominator odds.
+
+
+Note that we can also use an expit function to compute probabilities
+
+-   The logistic regression specifies $log(\frac{\mu}{1-\mu}) = \beta_0 + \beta_1X$.
+-   Can solve for $\mu: g^{−1}(g(\mu)) = \mu$.
+-   $\mu = \frac{\beta_0+\beta_1X}{1+e^{\beta_0+\beta_1X}}$
+-   Can now use this to obtain estimates of the probability that Y=1 given a specified set of values for the explanatory variables.
+-   $\beta_1 > 0$ implies that the probability of a success (Y=1) increases with X.
+-   $\beta_1 < 0$ implies that the probability of a success (Y=1) decreases with X.
+
+## MCAT Example
+Researchers collected data on medical school applicants including Sex, GPA, MCAT scores, and whether or not the student was accepted into medical school.
+Let the response be whether a student was accepted into med school (1 for yes and 0 for no) and if the student was Female or Male (base group is the Female group, 1 for male and 0 for female).
+
+First, researchers want to know how Sex may impact the probability of acceptance.
+```{r}
+# Create sample medical data
+medical <- data.frame(
+  Acceptance = c(1, 0, 1, 0, 1, 1, 0, 1),
+  Sex = c(0, 1, 0, 1, 0, 0, 1, 0),  # 0=Female, 1=Male
+  MCAT = c(35, 32, 40, 30, 38, 36, 31, 37)
+)
+head(medical)
+
+mod_med_sex <- glm(formula = Acceptance ~ Sex, family = binomial(link = "logit"),
+    data = medical)
+summary(mod_med_sex)
+
+```
+::: {.callout-note icon="false" collapse="true"}
+## Interpret results
+
+-   The estimate of the coefficient on Male is -0.8109
+-   Comparing male to female applicants, the odds ratio for acceptance is estimated to be $e^{-0.8109} = 0.44$
+-   The odds of acceptance for male applicants is estimated to be 0.44 times
+that of females.
+-   Going from a female to a male applicant results in an estimated relative
+change of 0.44 in the odds ratio of acceptance.
+:::
+
+::: {.callout-note icon="false" collapse="true"}
+## How does the probability of acceptance differ between female vs male applicants?
+
+For female applicants
+$$\hat{P}(Acceptance) = \frac{e^{0.5878}}{1+e^{0.5878}} = 0.6428$$
+For male applicants
+$$\hat{P}(Acceptance) = \frac{e^{0.5878−0.8109}}{1+e^{0.5878−0.8109}}=0.4444.$$
+:::
+
+
+Now, let's just consider the MCAT score.
+```{r}
+mod_med_mcat <- glm(formula = Acceptance ~ MCAT, family = binomial(link = "logit"),
+    data = medical)
+summary(mod_med_mcat)
+```
+
+::: {.callout-note icon="false" collapse="true"}
+## Interpret results
+
+-   The estimate of the coefficient on MCAT is 0.2459.
+-   A 1 unit increase in MCAT scores leads to an estimated relative change in the odds ratio of $e^{0.2459} = 1.28$.
+-   Comparing units from two populations that differ in their MCAT score by 1, the higher score has an estimated odds that is 1.28 times (28% higher) than the lower score.
+-   A 1 unit increase in the MCAT score leads to an estimated 28% increase in odds of being accepted.
+:::
+
+::: {.callout-note icon="false" collapse="true"}
+## How would a 5 unit increase compare?
+-   A 5 unit increase in MCAT scores leads to an estimated relative change in odds of $e^{0.2459 \times 5} = 3.42$
+-   A 5 unit higher score has 3.42 times the odds of the original/lower score.
+:::
+
+::: {.callout-note icon="false" collapse="true"}
+## Estimate the probability of acceptance for someone with an MCAT score of 40
+$$\hat{P}(Acceptance) = \frac{e^{−8.71+0.25∗40}}{1+e^{−8.71+0.25∗40}} = 0.75.$$
+:::
+
+Now consider the interaction
+$$g(\mu_i) = logit(\mu_i) = \beta_0 + \beta_1MCAT_i + \beta_2I(Sex_i = Male) + \beta_3MCAT_i I(Sex_i = Male)$$
+```{r}
+mod_med_interaction <- glm(formula = Acceptance ~ MCAT + Sex + MCAT * Sex, family
+    = binomial(link = "logit"), data = medical)
+summary(mod_med_interaction)
+```
+::: {.callout-note icon="false" collapse="true"}
+## Interpret MCAT
+
+-   Just like with linear regression when there is an interaction, we
+need to condition on a given value for one of the explanatory variables in the interaction.
+-   Say the sampling unit is Male. A 1 unit increase in MCAT
+score results in an estimated relative change in the odds ratio of $e^{0.1887+0.1697}$ = 1.416.
+-   For Female, a 1 unit increase in MCAT score results in an estimated relative change in the odds ratio of $e^{0.1887} = 1.207$
+-   A unit increase in MCAT score for males changes estimated odds by 41% (increase), but for females a unit increase in MCAT the estimated odds change by 20%.
+:::
+
+::: {.callout-note icon="false" collapse="true"}
+## What is the probability of acceptance for a Female applicant with an MCAT score of 38
+
+$$\hat{\mu}_i = \hat{P}(Y_i) = \frac{e^{−6.1804+0.1887∗38}}{1+e^{−6.1804+0.1887∗38}} = 0.729$$
+:::
+
+::: {.callout-note icon="false" collapse="true"}
+## What is the probability of acceptance for a Male applicant with an MCAT score of 38
+$$\hat{\mu}_i = \hat{P}(Y_i) = \frac{e^{−6.1804+0.1887∗38−7.2122+0.1697∗38}}{1+e^{−6.1804+0.1887∗38−7.2122+0.1697∗38}} = 0.556$$
+:::
+
+::: {.callout-note icon="false" collapse="true"}
+## Compute this again for both cases where MCAT is 40
+
+So, an increase of 2 points in MCAT score (going from 38 to 40) will increase Females estimated probability of Acceptance by about 7% points to 0.80 (from 0.73 to 0.80 for a change of 0.07). For Male, the same increase in MCAT score will result in estimated probability increasing by about 16% points to 0.72.
+:::
+
+Take for example a Female applicant.
+-   Note that the interpretation of the estimated coefficient on MCAT is the estimated change in the log odds of Acceptance for an 1 unit increase in MCAT scores (log odds for $X+1$ compared to log odds for $X$)
+-   The exponentiated estimate, $e^{\hat{\beta}_1}$, is the estimated relative
+change in the odds of Acceptance for a 1 unit increase in MCAT (the estimated odds ratio (comparing $X+1$ to $X$) is $e^{\hat{\beta}_1$)
+-   Increasing MCAT score from 30 to 35 will increase the estimated probability by 23% (from 0.37 to 0.60).
+-   Increasing MCAT score from 35 to 40 will increase the estimated probability by 19% (from 0.60 to 0.79).
+
+# Framingham
+The Framingham data on the class website is heart study which included 4699 subjects. Their coronary heart disease status (yes or no), systolic blood pressure, diastolic blood pressure, serum cholesterol level, sex (female no or yes) and age (in years). Let the response be coronary heart disease status (chd yes or no). But now take the explanatory variable to be the categorized blood pressure. Low is (80,126], normal is (126,146], high is (146,166]
+and very high is (166,270]. Also along with sex (female yes or no).
+
+-   Say we treat blood pressure group as a categorical variable
+that is not ordinal.
+-   If it is thought that the groups are ordinal, and that a **linear trend** exists among them, then can just include blood pressure group as a single quantitative (integer) explanatory variable.
+-   Specifically, $E(Y_i) = \beta_0 + \beta_1BP_i$ where $BP_i = \{1, 2, 3, 4\}$
+-   To keep it general, will keep blood pressure group as
+categorical ($K=4$). $BP_i$ can take levels low, normal, high, and
+very high.
+-   Will set the low blood pressure category to be the base group. Again, Low is (80,126], normal is (126,146], high is (146,166] and very high is (166,270]. Also along with sex (female yes or no).
+-   The response is CHD yes and the explanatory variable is the categorical blood pressure group (low group (80,126] is the base group).
+
+$$logit(\mu_i) = \beta_0 + \beta_1I(BP_i = Normal) + \beta_2I(BP_i = High) + \beta_3I(BP_i = VeryHigh)$$
+```{r}
+# Create sample Framingham data
+framingham <- data.frame(
+  chdfate = c(0, 1, 0, 1, 0, 0, 1, 0),
+  sex = c(1, 2, 1, 2, 1, 1, 2, 1),
+  sbp = c(120, 150, 130, 170, 125, 145, 165, 135)
+)
+
+# Convert sex to 0 or 1 and create a female variable
+framingham$sex = framingham$sex - 1
+framingham$female = framingham$sex
+
+# Create a new variable, which categorizes the blood pressure of a subject
+framingham$sbpgrp = cut(framingham$sbp, 
+                       breaks=c(min(framingham$sbp), 126, 146, 166, max(framingham$sbp)),
+                       include.lowest=TRUE)
+
+mod_frame <- glm(formula = chdfate ~ sbpgrp, family = binomial(link = "logit"),
+    data = framingham)
+summary(mod_frame)
+```
+
+::: {.callout-tip icon="false" collapse="false"}
+## Interpreting estimates
+
+Can interpret estimates by comparing groups.
+
+-   Comparing Very High group to Low leads to an estimated odds ratio of $e^{\hat{\beta}_3} = e^{1.08746} = 2.96$. 
+-   The Very High group has an estimated odds that is 2.96 than that of the odds for Low group.
+-   Comparing Very High group to Normal leads to an estimated odds ratio of $e^{
+\hat{\beta}_3-\hat{\beta}_1} = e^{1.08746−0.47106} = 1.85$
+-   The Very High group has an estimated odds that is 1.85 than that of the odds
+for Normal group.
+-   Remember that the estimated odds for an observation with covariates $X$ was $e^{X\hat{\beta}}$
+-   To interpret effect of coefficient, write out odds for each group and take ratio, then simplify.
+:::
+
+Now the response is CHD yes and the explanatory variable are the categorical blood pressure group (low group (80,126] is the base group) along the sex (female yes or no) covariate and interaction terms.
+$$logit(\mu_i) = \beta_0 + \beta_1I(BP_i = Normal) + \beta_2I(BP_i = High) + \beta_3I(BP_i =
+VeryHigh) + \beta_4I(Female_i = 1) + \beta_5I(BP_i = Normal)I(Female_i = 1) + \beta_6I(BP_i =High)I(Female_i = 1) + \beta_7I(BP_i = VeryHigh)I(Female_i = 1)$$
+
+::: {.callout-tip icon="false" collapse="false"}
+## Interpreting estimates
+Can interpret estimates by comparing groups of blood pressure, but will have to condition on Female yes/no first.
+
+-   Comparing Very High group to Low for Males leads for to an estimated odds ratio of $e^{\hat{\beta}_3} = e^{0.80912} = 2.24$
+-   The Very High group for Males has an estimated odds that is 2.24 times that of the odds for Low group.
+-   Comparing Very High group to Low for Females leads for to an estimated odds ratio of $e^{\hat{\beta}_3+\hat{\beta}_7}= e^{0.80912+0.63076} = 4.22$. 
+-   The Very High group for Females has an estimated odds that is 4.22 that of the odds for Low group.
+-   The estimated odds of chd (Y=1) for Female in Very High group is $e^{\hat{\beta}_0+\hat{\beta}_3+\hat{\beta}_4+\hat{\beta}_7}$
+-   The estimated odds of Y=1 for Female in Low group is $e^{\hat{\beta}_0+\hat{\beta}_4}$
+-   Comparing Very High group to Normal for Males leads to an estimated odds ratio of $e^{\hat{\beta}_3-\hat{\beta}_1} = e^{0.80912−0.36796} = 1.55$. 
+-   The Very High group for Males has an estimated odds that is 1.55 than that of the odds for Normal group.
+-   Comparing Very High group to Normal for Female leads to an
+estimated odds ratio of $e^{\hat{\beta}_3+\hat{\beta}_7−(\hat{\beta}_1+\hat{\beta}_5)} = e^{0.8091+0.6307−0.3679−0.0852} = 2.68$.
+-   The Very High group for Females has an estimated odds that is
+2.68 than that of the odds for Normal group.
+-   The estimated odds of chd (Y=1) for Female in Very High group is $e^{\hat{\beta}_0+\hat{\beta}_3+\hat{\beta}_4+\hat{\beta}_7}$
+-   The estimated odds of Y=1 for Female in Normal group is $e^{\hat{\beta}_0+\hat{\beta}_1+\hat{\beta}_4+\hat{\beta}_5}$
+
+:::
