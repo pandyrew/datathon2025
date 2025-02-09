@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { config } from "@/app/config";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -88,21 +89,34 @@ export default function Navbar() {
 
           {/* Auth Components */}
           <SignedOut>
-            <SignInButton
-              mode="modal"
-              forceRedirectUrl="/dashboard"
-              signUpForceRedirectUrl="/dashboard"
-            >
-              <button
-                className={`border-2 px-6 py-2 rounded-full transition-all ${
-                  scrolled
-                    ? "text-gray-900 border-gray-900 hover:bg-gray-900 hover:text-white"
-                    : "text-white border-white hover:bg-white hover:text-black"
-                }`}
+            {config.isApplicationOpen ? (
+              <SignInButton
+                mode="modal"
+                forceRedirectUrl="/dashboard"
+                signUpForceRedirectUrl="/dashboard"
               >
-                APPLY
+                <button
+                  className={`border-2 px-6 py-2 rounded-full transition-all ${
+                    scrolled
+                      ? "text-gray-900 border-gray-900 hover:bg-gray-900 hover:text-white"
+                      : "text-white border-white hover:bg-white hover:text-black"
+                  }`}
+                >
+                  APPLY
+                </button>
+              </SignInButton>
+            ) : (
+              <button
+                className={`border-2 px-6 py-2 rounded-full transition-all opacity-50 cursor-not-allowed ${
+                  scrolled
+                    ? "text-gray-900 border-gray-900"
+                    : "text-white border-white"
+                }`}
+                disabled
+              >
+                COMING SOON
               </button>
-            </SignInButton>
+            )}
           </SignedOut>
 
           <SignedIn>
