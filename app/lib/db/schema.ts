@@ -107,10 +107,11 @@ export const sessions = pgTable("sessions", {
 export const ratings = pgTable("ratings", {
   id: uuid("id").primaryKey().defaultRandom(),
   applicationId: uuid("application_id").notNull(),
-  applicationRole: varchar("application_role", { length: 20 }).notNull(), // "participant", "mentor", "judge"
   score: integer("score").notNull(),
   feedback: text("feedback"),
-  ratedBy: uuid("rated_by").notNull(), // references students.id of the admin/judge
+  ratedBy: uuid("rated_by")
+    .notNull()
+    .references(() => students.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

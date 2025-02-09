@@ -473,7 +473,6 @@ export async function getApplicationsByTypeAndStatus(type: ApplicationType) {
 
 export async function addRating(data: {
   applicationId: string;
-  applicationRole: string;
   score: number;
   feedback?: string;
   ratedBy: string;

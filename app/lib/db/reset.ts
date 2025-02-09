@@ -34,7 +34,7 @@ async function reset() {
 
     // 2. Create tables in correct order
     console.log("Creating tables...");
-    
+
     // Create teams table first (no dependencies)
     await db.execute(sql`
       CREATE TABLE "teams" (
@@ -141,10 +141,9 @@ async function reset() {
       CREATE TABLE "ratings" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         "application_id" uuid NOT NULL,
-        "application_role" varchar(20) NOT NULL,
         "score" integer NOT NULL,
         "feedback" text,
-        "rated_by" uuid NOT NULL,
+        "rated_by" uuid NOT NULL REFERENCES "students"("id"),
         "created_at" timestamp DEFAULT now() NOT NULL,
         "updated_at" timestamp DEFAULT now() NOT NULL
       );

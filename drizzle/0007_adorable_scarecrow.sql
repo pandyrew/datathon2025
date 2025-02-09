@@ -1,0 +1,1 @@
+ALTER TABLE "ratings" ADD CONSTRAINT "ratings_rated_by_students_id_fk" FOREIGN KEY ("rated_by") REFERENCES "public"."students"("id") ON DELETE no action ON UPDATE no action;
