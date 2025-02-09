@@ -21,7 +21,7 @@ const STATS = [
 
 export default function Stats() {
   return (
-    <section className="min-h-screen bg-slate-100 pt-0 py-32 px-6">
+    <section className="min-h-screen bg-slate-100 pt-32 py-32 px-6 ">
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-[500px,1fr] gap-12">
           {/* Left side - Label */}
