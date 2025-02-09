@@ -13,10 +13,10 @@ const WONDERS = [
     video: "wall.mp4",
   },
   {
-    video: "wall.mp4", // Temporary
+    video: "tajmahal.mp4", // Temporary
   },
   {
-    video: "colosseum.mp4", // Temporary
+    video: "christ.mp4", // Temporary
   },
   {
     video: "wall.mp4", // Temporary
