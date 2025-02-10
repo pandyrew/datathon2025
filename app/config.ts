@@ -1,5 +1,5 @@
 export const config = {
-  applicationOpenDate: "March 1st, 2024",
+  applicationOpenDate: "Feburary 21, 2025",
   isApplicationOpen: false,
   eventDates: {
     start: "APR 11",
