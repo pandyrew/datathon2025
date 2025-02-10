@@ -22,7 +22,7 @@ const WONDERS = [
     video: "machu.mp4", // Temporary
   },
   {
-    video: "colosseum.mp4", // Temporary
+    video: "chichen.mp4", // Temporary
   },
   {
     video: "pyramids.mp4", // Temporary
