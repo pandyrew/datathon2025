@@ -25,7 +25,7 @@ const SOCIAL_LINKS = [
   },
   {
     name: "Discord",
-    url: "https://discord.gg/dataatuci",
+    url: "https://discord.gg/Z56PsQ3unG",
     icon: (
       <svg
         className="w-6 h-6"
@@ -39,7 +39,7 @@ const SOCIAL_LINKS = [
   },
   {
     name: "LinkedIn",
-    url: "https://linkedin.com/company/dataatuci",
+    url: "https://www.linkedin.com/company/data-uci/",
     icon: (
       <svg
         className="w-6 h-6"
@@ -118,4 +118,4 @@ export default function Contact() {
       </div>
     </section>
   );
-} 
+}
