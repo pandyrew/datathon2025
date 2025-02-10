@@ -4,8 +4,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Datathon 2025",
-  description: "Datathon 2025",
+  title: "Soar into Data",
+  description: "7 wonders of the world",
 };
 
 export default function RootLayout({
