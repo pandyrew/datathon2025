@@ -6,9 +6,9 @@ import { useRef, useState } from "react";
 
 const FAQ_ITEMS = [
   {
-    question: "What is Datathon?",
+    question: "What is a Datathon?",
     answer:
-      "Datathon is a 36-hour data science competition where students work in teams to solve real-world problems using data analytics and machine learning. Participants will have access to unique datasets, mentorship, and workshops throughout the event.",
+      "Datathons are 36-hour data science competitions where students work in teams to solve real-world problems using data analytics and machine learning. Participants will have access to unique datasets, mentorship, and workshops throughout the event.",
   },
   {
     question: "Who can participate?",

@@ -64,12 +64,12 @@ export default function About() {
                 }}
                 className="text-xl text-gray-700 mb-7 font-chillax"
               >
-                Datathon is UCI&apos;s premier data science competition where
-                students work in teams to solve real-world problems using data
-                analytics and machine learning. Over the course of 36 hours,
-                participants will have the opportunity to work with unique
-                datasets, receive mentorship from industry professionals, and
-                compete for prizes.
+                Soar into Data is UCI&apos;s premier data science competition
+                where students work in teams to solve real-world problems using
+                data analytics and machine learning. Over the course of 36
+                hours, participants will have the opportunity to work with
+                unique datasets, receive mentorship from industry professionals,
+                and compete for prizes.
               </motion.p>
 
               <motion.p
