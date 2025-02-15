@@ -18,17 +18,20 @@ async function reset() {
 
     if (tables.rows.length > 0) {
       console.log("Dropping existing tables...");
-      await db.execute(sql`
-        DROP TABLE IF EXISTS "participant_applications" CASCADE;
-        DROP TABLE IF EXISTS "judge_applications" CASCADE;
-        DROP TABLE IF EXISTS "mentor_applications" CASCADE;
-        DROP TABLE IF EXISTS "applications" CASCADE;
-        DROP TABLE IF EXISTS "ratings" CASCADE;
-        DROP TABLE IF EXISTS "users" CASCADE;
-        DROP TABLE IF EXISTS "students" CASCADE;
-        DROP TABLE IF EXISTS "teams" CASCADE;
-        DROP TABLE IF EXISTS "sessions" CASCADE;
-      `);
+      // Drop tables one by one in correct order
+      await db.execute(
+        sql`DROP TABLE IF EXISTS "participant_applications" CASCADE;`
+      );
+      await db.execute(sql`DROP TABLE IF EXISTS "judge_applications" CASCADE;`);
+      await db.execute(
+        sql`DROP TABLE IF EXISTS "mentor_applications" CASCADE;`
+      );
+      await db.execute(sql`DROP TABLE IF EXISTS "applications" CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS "ratings" CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS "users" CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS "students" CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS "teams" CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS "sessions" CASCADE;`);
       console.log("Dropped all tables");
     } else {
       console.log("No tables to drop");
@@ -158,12 +161,13 @@ async function reset() {
   }
 
   // 3. Ensure migrations directory exists
-  const migrationsDir = path.join(process.cwd(), "drizzle", "migrations");
-  const metaDir = path.join(migrationsDir, "meta");
+  const migrationsDir = path.join(process.cwd(), "drizzle");
+  await fs.mkdir(migrationsDir, { recursive: true });
 
+  // 4. Create meta directory and _journal.json
+  const metaDir = path.join(migrationsDir, "meta");
   await fs.mkdir(metaDir, { recursive: true });
 
-  // 4. Create _journal.json
   const journalContent = {
     version: "5",
     dialect: "pg",

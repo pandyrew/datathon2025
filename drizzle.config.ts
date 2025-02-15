@@ -3,19 +3,17 @@ import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 
-// Parse DATABASE_URL
-const dbUrl = new URL(process.env.DATABASE_URL!);
+if (!process.env.DATABASE_URL && !process.env.DATABASE_URL_UNPOOLED) {
+  throw new Error("DATABASE_URL or DATABASE_URL_UNPOOLED must be set");
+}
 
 export default {
   schema: "./app/lib/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
+  driver: "pg",
   dbCredentials: {
-    host: dbUrl.hostname,
-    port: parseInt(dbUrl.port),
-    user: dbUrl.username,
-    password: dbUrl.password,
-    database: dbUrl.pathname.slice(1), // Remove leading slash
-    ssl: false,
+    connectionString:
+      process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL!,
   },
 } satisfies Config;

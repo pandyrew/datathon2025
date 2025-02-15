@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import path from "path";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { migrate } from "drizzle-orm/neon-http/migrator";
 import { getConnection, closeConnection } from "./drizzle";
 
 dotenv.config({ path: ".env.local" });

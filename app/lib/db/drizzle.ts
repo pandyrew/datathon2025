@@ -1,34 +1,25 @@
-import { Pool } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { config } from "dotenv";
 
 config();
 
-let pool: Pool | null = null;
-let db: NodePgDatabase<typeof schema> | null = null;
+let db: NeonHttpDatabase<typeof schema> | null = null;
 
-export async function getConnection(): Promise<NodePgDatabase<typeof schema>> {
-  if (!pool) {
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === "production",
-    });
-    db = drizzle(pool, { schema });
-  }
-
+export async function getConnection(): Promise<
+  NeonHttpDatabase<typeof schema>
+> {
   if (!db) {
-    throw new Error("Failed to establish database connection");
+    const sql = neon(process.env.DATABASE_URL!);
+    db = drizzle(sql, { schema });
   }
 
   return db;
 }
 
 export async function closeConnection() {
-  if (pool) {
-    await pool.end();
-    pool = null;
-    db = null;
-  }
+  // No need to explicitly close connection with neon-http
+  db = null;
 }
