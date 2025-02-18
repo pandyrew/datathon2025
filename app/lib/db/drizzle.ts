@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
-import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { config } from "dotenv";
 
 config();
@@ -12,11 +12,12 @@ export async function getConnection(): Promise<
   NeonHttpDatabase<typeof schema>
 > {
   if (!db) {
-    const sql = neon(process.env.DATABASE_URL!);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sql = neon(process.env.DATABASE_URL!) as any;
     db = drizzle(sql, { schema });
   }
 
-  return db;
+  return db!;
 }
 
 export async function closeConnection() {

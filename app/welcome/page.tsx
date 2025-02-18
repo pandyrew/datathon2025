@@ -17,6 +17,7 @@ export default function WelcomePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     async function checkStudent() {
@@ -29,14 +30,25 @@ export default function WelcomePage() {
             if (data.student.role) {
               router.push("/dashboard");
             }
+          } else if (response.status === 404 && retryCount < 3) {
+            // If student record not found, wait and retry
+            setTimeout(() => {
+              setRetryCount((prev) => prev + 1);
+            }, 1000); // Wait 1 second before retrying
           }
         } catch (error) {
           console.error("Error checking student:", error);
+          if (retryCount < 3) {
+            // Also retry on other errors
+            setTimeout(() => {
+              setRetryCount((prev) => prev + 1);
+            }, 1000);
+          }
         }
       }
     }
     checkStudent();
-  }, [user?.id, router]);
+  }, [user?.id, router, retryCount]);
 
   if (isLoaded && !user) {
     redirect("/");
@@ -45,7 +57,28 @@ export default function WelcomePage() {
   const handleRoleSelect = async (role: string) => {
     setIsLoading(true);
     try {
-      console.log("role", role);
+      // First ensure the student record exists
+      const checkResponse = await fetch(`/api/students/${user?.id}`);
+      if (!checkResponse.ok && checkResponse.status === 404) {
+        // If student doesn't exist, create it
+        const createResponse = await fetch("/api/students", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: user?.id,
+            email: user?.emailAddresses[0]?.emailAddress,
+            firstName: user?.firstName || "",
+            lastName: user?.lastName || "",
+          }),
+        });
+        if (!createResponse.ok) {
+          throw new Error("Failed to create student record");
+        }
+      }
+
+      // Now update the role
       const response = await fetch("/api/user/role", {
         method: "PUT",
         headers: {
@@ -60,7 +93,7 @@ export default function WelcomePage() {
 
       router.push("/dashboard");
     } catch (error) {
-      console.error("Error updating role in WelcomePage 60:", error);
+      console.error("Error updating role:", error);
       setIsLoading(false);
     }
   };
