@@ -51,7 +51,7 @@ export default function WelcomeStep({
               Datathon Information
             </h3>
             <ul className="mt-2 space-y-1 text-gray-600">
-              <li>📅 Date: April 11th - 13th, 2024</li>
+              <li>📅 Date: April 11th - 13th, 2025</li>
               <li>📍 Location: [INSERT LOCATION]</li>
               <li>[INSERT ADDY]</li>
             </ul>
