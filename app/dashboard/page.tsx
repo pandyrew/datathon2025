@@ -186,16 +186,6 @@ export default async function DashboardPage() {
 
           {/* Add WithdrawalSection before Development Info */}
           <WithdrawalSection application={studentData?.application} />
-
-          {/* Development Info Section */}
-          <div className="my-8 p-4 bg-gray-100 rounded-lg">
-            <h2 className="text-lg font-semibold mb-4">
-              Development Information
-            </h2>
-            <pre className="bg-white p-4 rounded overflow-auto">
-              {JSON.stringify(studentData, null, 2)}
-            </pre>
-          </div>
         </div>
       </div>
     </div>
