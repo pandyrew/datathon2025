@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { Blob } from "../ui/Blob";
 import Navbar from "./Navbar";
-import { config } from "@/app/config";
-import { SignInButton } from "@clerk/nextjs";
 
 const WONDERS = [
   {
@@ -112,23 +110,6 @@ export default function Landing() {
           <p className="text-xl md:text-5xl max-w-2xl font-dancing font-light mb-8">
             7 wonders of the world
           </p>
-          {config.isApplicationOpen ? (
-            <SignInButton
-              mode="modal"
-              forceRedirectUrl="/dashboard"
-              signUpForceRedirectUrl="/dashboard"
-            >
-              <a className="text-white border-2 font-outfit border-white px-8 py-3 rounded-full hover:bg-white hover:text-black transition-all text-lg cursor-pointer">
-                APPLY
-              </a>
-            </SignInButton>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xl font-outfit">
-                Applications open {config.applicationOpenDate}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>

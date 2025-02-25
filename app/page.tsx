@@ -11,13 +11,18 @@ import {
 } from "./components/home";
 import Navbar from "./components/home/Navbar";
 import { Blob, Corner, Divider, FloatingLine } from "./components/ui";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
+import { config } from "@/app/config";
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
+      setScrolled(window.scrollY > 100);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -28,6 +33,56 @@ export default function Home() {
     <>
       <Landing />
       <Navbar />
+
+      {/* Floating Apply Button - positioned to float over all content */}
+      <div className="fixed bottom-8 right-8 z-[100]">
+        <SignedOut>
+          {config.isApplicationOpen ? (
+            <SignInButton
+              mode="modal"
+              forceRedirectUrl="/dashboard"
+              signUpForceRedirectUrl="/dashboard"
+            >
+              <button
+                className={`border-2 px-6 py-2 rounded-full transition-all shadow-lg ${
+                  scrolled
+                    ? "text-gray-900 border-gray-900 bg-white/80 hover:bg-gray-900 hover:text-white"
+                    : "text-white border-white hover:bg-white hover:text-black"
+                }`}
+              >
+                APPLY
+              </button>
+            </SignInButton>
+          ) : (
+            <button
+              className={`border-2 px-6 py-2 rounded-full transition-all opacity-50 cursor-not-allowed shadow-lg ${
+                scrolled
+                  ? "text-gray-900 border-gray-900 bg-white/80"
+                  : "text-white border-white"
+              }`}
+              disabled
+            >
+              COMING SOON
+            </button>
+          )}
+        </SignedOut>
+
+        <SignedIn>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className={`border-2 px-6 py-2 rounded-full transition-all shadow-lg ${
+                scrolled
+                  ? "text-gray-900 border-gray-900 bg-white/80 hover:bg-gray-900 hover:text-white"
+                  : "text-white border-white hover:bg-white hover:text-black"
+              }`}
+            >
+              DASHBOARD
+            </Link>
+          </div>
+        </SignedIn>
+      </div>
+
       <main className="relative">
         <div className="h-screen pointer-events-none" />{" "}
         {/* Spacer for first viewport */}
