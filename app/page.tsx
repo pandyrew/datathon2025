@@ -35,52 +35,54 @@ export default function Home() {
       <Navbar />
 
       {/* Floating Apply Button - positioned to float over all content */}
-      <div className="fixed bottom-8 right-8 z-[100]">
-        <SignedOut>
-          {config.isApplicationOpen ? (
-            <SignInButton
-              mode="modal"
-              forceRedirectUrl="/dashboard"
-              signUpForceRedirectUrl="/dashboard"
-            >
+      <div className="fixed bottom-[200px] left-0 right-0 flex justify-center items-center pb-8 z-[100]">
+        <div className="flex flex-col items-center">
+          <SignedOut>
+            {config.isApplicationOpen ? (
+              <SignInButton
+                mode="modal"
+                forceRedirectUrl="/dashboard"
+                signUpForceRedirectUrl="/dashboard"
+              >
+                <button
+                  className={`border-2 px-8 py-3 rounded-full transition-all shadow-lg text-lg ${
+                    scrolled
+                      ? "text-gray-900 border-gray-900 bg-white/80 hover:bg-gray-900 hover:text-white"
+                      : "text-white border-white hover:bg-white hover:text-black"
+                  }`}
+                >
+                  APPLY
+                </button>
+              </SignInButton>
+            ) : (
               <button
-                className={`border-2 px-6 py-2 rounded-full transition-all shadow-lg ${
+                className={`border-2 px-8 py-3 rounded-full transition-all opacity-50 cursor-not-allowed shadow-lg text-lg ${
+                  scrolled
+                    ? "text-gray-900 border-gray-900 bg-white/80"
+                    : "text-white border-white"
+                }`}
+                disabled
+              >
+                COMING SOON
+              </button>
+            )}
+          </SignedOut>
+
+          <SignedIn>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard"
+                className={`border-2 px-8 py-3 rounded-full transition-all shadow-lg text-lg ${
                   scrolled
                     ? "text-gray-900 border-gray-900 bg-white/80 hover:bg-gray-900 hover:text-white"
                     : "text-white border-white hover:bg-white hover:text-black"
                 }`}
               >
-                APPLY
-              </button>
-            </SignInButton>
-          ) : (
-            <button
-              className={`border-2 px-6 py-2 rounded-full transition-all opacity-50 cursor-not-allowed shadow-lg ${
-                scrolled
-                  ? "text-gray-900 border-gray-900 bg-white/80"
-                  : "text-white border-white"
-              }`}
-              disabled
-            >
-              COMING SOON
-            </button>
-          )}
-        </SignedOut>
-
-        <SignedIn>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className={`border-2 px-6 py-2 rounded-full transition-all shadow-lg ${
-                scrolled
-                  ? "text-gray-900 border-gray-900 bg-white/80 hover:bg-gray-900 hover:text-white"
-                  : "text-white border-white hover:bg-white hover:text-black"
-              }`}
-            >
-              DASHBOARD
-            </Link>
-          </div>
-        </SignedIn>
+                DASHBOARD
+              </Link>
+            </div>
+          </SignedIn>
+        </div>
       </div>
 
       <main className="relative">
