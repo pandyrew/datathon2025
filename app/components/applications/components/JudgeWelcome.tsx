@@ -62,10 +62,10 @@ export default function JudgeWelcome({
               Event Information
             </h3>
             <p className="mt-2 text-gray-600">
-              The Datathon will occur April 11 - 13 at the [LOCATION]. Judges
-              will only be needed in-person on Sunday, April 13th from 11 AM - 6
-              PM (times are subject to change depending on amount of data
-              projects).
+              The Datathon will occur April 11 - 13 at the Interdisciplinary
+              Science and Engineering Building (ISEB). Judges will only be
+              needed in-person on Sunday, April 13th from 11 AM - 6 PM (times
+              are subject to change depending on amount of data projects).
             </p>
             <p className="mt-2 text-gray-600 italic">
               Finalized detailed schedule and times will be available later.

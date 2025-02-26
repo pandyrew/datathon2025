@@ -62,9 +62,10 @@ export default function MentorWelcome({
               Event Information
             </h3>
             <p className="mt-2 text-gray-600">
-              The Datathon will occur April 11 - 13 at the [LOCATION]. Mentors
-              will only be needed Saturday, April 13. Detailed schedule and
-              times will be available later.
+              The Datathon will occur April 11 - 13 at the Interdisciplinary
+              Science and Engineering Building (ISEB). Mentors will only be
+              needed Saturday, April 13. Detailed schedule and times will be
+              available later.
             </p>
           </div>
 
