@@ -40,11 +40,17 @@ export default function WelcomeStep({
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-2xl font-outfit text-gray-900">
-          2025 Datathon [NAME OF THEME] ~ [NAME OF EVENT]
+          2025 Datathon Soar into Data - Data @ UCI
         </h2>
 
         <div className="prose prose-indigo font-chillax">
-          <p className="text-gray-600">[INSERT SHPEAL ABOUT DATATHON]</p>
+          <p className="text-gray-600">
+            A Datathon is a data centric hackathon that brings together data
+            enthusiasts from diverse backgrounds to develop innovative
+            solutions. Participants leverage analytical skills and data science
+            tools to address real world challenges or explore open ended
+            projects in a dynamic, collaborative environment.
+          </p>
 
           <div className="my-6">
             <h3 className="text-lg font-medium text-gray-900">
@@ -52,8 +58,11 @@ export default function WelcomeStep({
             </h3>
             <ul className="mt-2 space-y-1 text-gray-600">
               <li>📅 Date: April 11th - 13th, 2025</li>
-              <li>📍 Location: [INSERT LOCATION]</li>
-              <li>[INSERT ADDY]</li>
+              <li>
+                📍 Location: Interdisciplinary Science and Engineering Building
+                (ISEB)
+              </li>
+              <li>419 Physical Sciences Quad, Irvine, CA 92697</li>
             </ul>
           </div>
 
@@ -91,17 +100,17 @@ export default function WelcomeStep({
             <p>
               Application deadline:{" "}
               <span className="font-medium">
-                March 27th, 2025 (Thursday) at 11:59 PM
+                March 28th, 2025 (Friday) at 11:59 PM
               </span>
             </p>
             <p className="mt-2">
               If you have any questions, comments, or concerns feel free to
               email us at{" "}
               <a
-                href="mailto:[INSERT EMAIL]"
+                href="mailto:dataclub@uci.edu"
                 className="text-indigo-600 hover:text-indigo-700"
               >
-                [INSERT EMAIL]
+                dataclub@uci.edu
               </a>
             </p>
           </div>
