@@ -35,7 +35,7 @@ export default function Home() {
       <Navbar />
 
       {/* Floating Apply Button - positioned to float over all content */}
-      <div className="fixed bottom-[200px] left-0 right-0 flex justify-center items-center pb-8 z-[100]">
+      <div className="fixed bottom-[10%] left-0 right-0 flex justify-center items-center pb-8 z-[100]">
         <div className="flex flex-col items-center">
           <SignedOut>
             {config.isApplicationOpen ? (
