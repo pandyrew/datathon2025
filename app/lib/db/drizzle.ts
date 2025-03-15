@@ -1,25 +1,21 @@
 import { createConnection } from "./config";
 import * as schema from "./schema";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { config } from "dotenv";
 import { Pool } from "pg";
+import { supabase, supabaseAdmin } from "./supabase";
 
 config();
 
-type DB = NodePgDatabase<typeof schema> | NeonHttpDatabase<typeof schema>;
+type DB = NodePgDatabase<typeof schema>;
 let db: DB | null = null;
 let pool: Pool | null = null;
 
 export async function getConnection(): Promise<DB> {
   if (!db) {
     const connection = await createConnection();
-    if (process.env.NODE_ENV === "development") {
-      // In development, connection will be NodePgDatabase
-      const nodePgDb = connection as NodePgDatabase<typeof schema>;
-      pool = (nodePgDb as unknown as { client: Pool }).client;
-    }
     db = connection;
+    pool = (db as unknown as { client: Pool }).client;
   }
   return db!;
 }
@@ -30,4 +26,26 @@ export async function closeConnection() {
     pool = null;
   }
   db = null;
+}
+
+// Export Supabase clients for direct access when needed
+export { supabase, supabaseAdmin };
+
+// Helper function to check database connection
+export async function checkDatabaseConnection(): Promise<boolean> {
+  try {
+    const { error } = await supabaseAdmin
+      .from("students")
+      .select("id")
+      .limit(1);
+    if (error) {
+      console.error("Database connection error:", error.message);
+      return false;
+    }
+    console.log("Database connection successful");
+    return true;
+  } catch (err) {
+    console.error("Database connection error:", err);
+    return false;
+  }
 }

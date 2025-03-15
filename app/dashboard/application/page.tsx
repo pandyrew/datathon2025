@@ -14,8 +14,8 @@ import LoadingSpinner from "@/app/components/applications/components/LoadingSpin
 type StudentData = {
   student: {
     id: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     role: string;
   };
 };
@@ -50,8 +50,6 @@ function ApplicationContent() {
   if (!studentData) {
     return <LoadingSpinner />;
   }
-
-  
 
   // Render the appropriate application component based on role
   switch (studentData.student.role) {

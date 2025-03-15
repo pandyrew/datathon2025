@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
-import { getConnection } from "@/app/lib/db/drizzle";
-import { students } from "@/app/lib/db/schema";
+import { supabaseAdmin } from "@/app/lib/db/supabase";
 import { Webhook } from "svix";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -54,16 +54,23 @@ export async function POST(req: Request) {
   if (eventType === "user.created") {
     const { id, email_addresses, first_name, last_name } = payload.data;
     console.log("creating student", id, email_addresses, first_name, last_name);
-    const db = await getConnection();
 
     try {
       // Create student record without a default role
-      await db.insert(students).values({
-        userId: id,
+      const { error } = await supabaseAdmin.from("students").insert({
+        id: uuidv4(),
+        user_id: id,
         email: email_addresses[0].email_address,
-        firstName: first_name || "",
-        lastName: last_name || "",
+        first_name: first_name || "",
+        last_name: last_name || "",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
+
+      if (error) {
+        console.error("Error creating student record:", error.message);
+        return new Response("Error creating record", { status: 500 });
+      }
     } catch (error) {
       console.error("Error creating student record:", error);
       return new Response("Error creating record", { status: 500 });

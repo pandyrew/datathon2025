@@ -10,27 +10,27 @@ import MentorWelcome from "./components/MentorWelcome";
 type StudentData = {
   student: {
     id: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     role: string;
   };
   application: {
     id: string;
     status: string;
-    fullName?: string;
+    full_name?: string;
     pronouns?: string;
-    pronounsOther?: string;
+    pronouns_other?: string;
     affiliation?: string;
-    programmingLanguages?: string[];
-    comfortLevel?: number;
-    hasHackathonExperience?: boolean;
+    programming_languages?: string[];
+    comfort_level?: number;
+    has_hackathon_experience?: boolean;
     motivation?: string;
-    mentorRoleDescription?: string;
+    mentor_role_description?: string;
     availability?: string;
-    linkedinUrl?: string;
-    githubUrl?: string;
-    websiteUrl?: string;
-    dietaryRestrictions?: string[];
+    linkedin_url?: string;
+    github_url?: string;
+    website_url?: string;
+    dietary_restrictions?: string[];
   };
 };
 
@@ -129,23 +129,24 @@ export default function MentorApplication() {
           if (data.application) {
             setFormData({
               fullName:
-                data.application.fullName ||
+                data.application.full_name ||
                 `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
               pronouns: data.application.pronouns || "",
-              pronounsOther: data.application.pronounsOther || "",
+              pronounsOther: data.application.pronouns_other || "",
               affiliation: data.application.affiliation || "",
-              programmingLanguages: data.application.programmingLanguages || [],
-              comfortLevel: data.application.comfortLevel?.toString() || "3",
+              programmingLanguages:
+                data.application.programming_languages || [],
+              comfortLevel: data.application.comfort_level?.toString() || "3",
               hasHackathonExperience:
-                data.application.hasHackathonExperience || false,
+                data.application.has_hackathon_experience || false,
               motivation: data.application.motivation || "",
               mentorRoleDescription:
-                data.application.mentorRoleDescription || "",
+                data.application.mentor_role_description || "",
               availability: data.application.availability || "",
-              linkedinUrl: data.application.linkedinUrl || "",
-              githubUrl: data.application.githubUrl || "",
-              websiteUrl: data.application.websiteUrl || "",
-              dietaryRestrictions: data.application.dietaryRestrictions || [],
+              linkedinUrl: data.application.linkedin_url || "",
+              githubUrl: data.application.github_url || "",
+              websiteUrl: data.application.website_url || "",
+              dietaryRestrictions: data.application.dietary_restrictions || [],
             });
           }
         } catch (error) {

@@ -10,24 +10,24 @@ import JudgeWelcome from "./components/JudgeWelcome";
 type StudentData = {
   student: {
     id: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     role: string;
   };
   application: {
     id: string;
     status: string;
-    fullName?: string;
+    full_name?: string;
     pronouns?: string;
-    pronounsOther?: string;
+    pronouns_other?: string;
     affiliation?: string;
     experience?: string;
     motivation?: string;
-    feedbackComfort?: number;
+    feedback_comfort?: number;
     availability?: boolean;
-    linkedinUrl?: string;
-    githubUrl?: string;
-    websiteUrl?: string;
+    linkedin_url?: string;
+    github_url?: string;
+    website_url?: string;
   };
 };
 
@@ -123,19 +123,19 @@ export default function JudgeApplication() {
           if (data.application) {
             setFormData({
               fullName:
-                data.application.fullName ||
+                data.application.full_name ||
                 `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
               pronouns: data.application.pronouns || "",
-              pronounsOther: data.application.pronounsOther || "",
+              pronounsOther: data.application.pronouns_other || "",
               affiliation: data.application.affiliation || "",
               motivation: data.application.motivation || "",
               experience: data.application.experience || "",
               feedbackComfort:
-                data.application.feedbackComfort?.toString() || "3",
+                data.application.feedback_comfort?.toString() || "3",
               availability: data.application.availability || false,
-              linkedinUrl: data.application.linkedinUrl || "",
-              githubUrl: data.application.githubUrl || "",
-              websiteUrl: data.application.websiteUrl || "",
+              linkedinUrl: data.application.linkedin_url || "",
+              githubUrl: data.application.github_url || "",
+              websiteUrl: data.application.website_url || "",
             });
           }
         } catch (error) {

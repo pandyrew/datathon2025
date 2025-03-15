@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getApplicationByStudentId } from "@/app/lib/db/queries";
+import { getApplicationByStudentId } from "@/app/lib/db";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { requireAdmin } from "@/app/lib/auth/adminCheck";
@@ -152,19 +152,28 @@ export default async function ApplicationDetailPage({
     redirect("/dashboard/admin");
   }
   console.log("resolvedParams", resolvedParams);
-  const application = await getApplicationByStudentId(
+  const { data: application, error } = await getApplicationByStudentId(
     resolvedParams.id,
     resolvedParams.type
   );
   console.log("application", application);
-  if (!application) {
+  if (!application || error) {
     redirect(`/dashboard/admin/applications/${resolvedParams.type}`);
   }
 
   const typeTitle =
     resolvedParams.type.charAt(0).toUpperCase() + resolvedParams.type.slice(1);
 
-  const typedApplication = application as unknown as Application;
+  // Transform snake_case to camelCase for compatibility with existing component
+  const transformedApplication = Object.entries(application).reduce(
+    (acc, [key, value]) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
+        letter.toUpperCase()
+      );
+      return { ...acc, [camelKey]: value };
+    },
+    {}
+  ) as unknown as Application;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -185,12 +194,12 @@ export default async function ApplicationDetailPage({
             </h1>
           </div>
 
-          {typedApplication && (
-            <ApplicationDetails application={typedApplication} />
+          {transformedApplication && (
+            <ApplicationDetails application={transformedApplication} />
           )}
 
           <RatingSystem
-            applicationId={typedApplication.id}
+            applicationId={transformedApplication.id}
             applicationRole={resolvedParams.type}
           />
         </div>

@@ -1,9 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import {
-  // getStudentWithDetails,
-  getApplicationStats,
-} from "@/app/lib/db/queries";
+import { getApplicationStats } from "@/app/lib/db";
 import Link from "next/link";
 import { Users, UserCheck, Clock, XCircle } from "lucide-react";
 import { requireAdmin } from "@/app/lib/auth/adminCheck";

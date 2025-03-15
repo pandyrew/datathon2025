@@ -10,29 +10,29 @@ import WelcomeStep from "./components/ParticipantWelcome";
 type StudentData = {
   student: {
     id: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     role: string;
   };
   application: {
     id: string;
     status: string;
-    fullName?: string;
+    full_name?: string;
     gender?: string;
     pronouns?: string;
-    pronounsOther?: string;
+    pronouns_other?: string;
     university?: string;
     major?: string;
-    educationLevel?: string;
-    isFirstDatathon?: boolean;
-    comfortLevel?: number;
-    hasTeam?: boolean;
+    education_level?: string;
+    is_first_datathon?: boolean;
+    comfort_level?: number;
+    has_team?: boolean;
     teammates?: string;
-    dietaryRestrictions?: string;
-    developmentGoals?: string;
-    githubUrl?: string;
-    linkedinUrl?: string;
-    attendanceConfirmed?: boolean;
+    dietary_restrictions?: string;
+    development_goals?: string;
+    github_url?: string;
+    linkedin_url?: string;
+    attendance_confirmed?: boolean;
     feedback?: string;
   };
   team?: {
@@ -246,17 +246,17 @@ export default function ParticipantApplication() {
 
                     <div>
                       <label
-                        htmlFor="fullName"
+                        htmlFor="full_name"
                         className="block text-sm font-medium text-gray-700 font-chillax"
                       >
                         Full Name *
                       </label>
                       <input
                         type="text"
-                        id="fullName"
-                        name="fullName"
+                        id="full_name"
+                        name="full_name"
                         defaultValue={
-                          studentData?.application?.fullName ||
+                          studentData?.application?.full_name ||
                           `${user?.firstName || ""} ${
                             user?.lastName || ""
                           }`.trim()
@@ -314,11 +314,11 @@ export default function ParticipantApplication() {
                         {showPronounsOther && (
                           <input
                             type="text"
-                            id="pronounsOther"
-                            name="pronounsOther"
+                            id="pronouns_other"
+                            name="pronouns_other"
                             placeholder="Please specify your pronouns"
                             defaultValue={
-                              studentData.application.pronounsOther || ""
+                              studentData.application.pronouns_other || ""
                             }
                             className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                           />
@@ -362,16 +362,16 @@ export default function ParticipantApplication() {
 
                     <div>
                       <label
-                        htmlFor="year"
+                        htmlFor="education_level"
                         className="block text-sm font-medium text-gray-700 font-chillax"
                       >
                         Current Education Level *
                       </label>
                       <select
-                        id="year"
-                        name="year"
+                        id="education_level"
+                        name="education_level"
                         defaultValue={
-                          studentData.application.educationLevel || ""
+                          studentData.application.education_level || ""
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                         required
@@ -397,16 +397,16 @@ export default function ParticipantApplication() {
 
                   <div>
                     <label
-                      htmlFor="firstTime"
+                      htmlFor="is_first_datathon"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
                       Is this your first Datathon? *
                     </label>
                     <select
-                      id="firstTime"
-                      name="firstTime"
+                      id="is_first_datathon"
+                      name="is_first_datathon"
                       defaultValue={
-                        studentData.application.isFirstDatathon ? "yes" : "no"
+                        studentData.application.is_first_datathon ? "yes" : "no"
                       }
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                       required
@@ -419,7 +419,7 @@ export default function ParticipantApplication() {
 
                   <div>
                     <label
-                      htmlFor="comfort"
+                      htmlFor="comfort_level"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
                       How comfortable do you feel about working on a data
@@ -427,11 +427,13 @@ export default function ParticipantApplication() {
                     </label>
                     <input
                       type="range"
-                      id="comfort"
-                      name="comfort"
+                      id="comfort_level"
+                      name="comfort_level"
                       min="1"
                       max="5"
-                      defaultValue={studentData.application.comfortLevel || "3"}
+                      defaultValue={
+                        studentData.application.comfort_level || "3"
+                      }
                       className="mt-1 block w-full"
                       required
                     />
@@ -443,16 +445,16 @@ export default function ParticipantApplication() {
 
                   <div>
                     <label
-                      htmlFor="team"
+                      htmlFor="has_team"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
                       Do you have a team in mind? *
                     </label>
                     <select
-                      id="team"
-                      name="team"
+                      id="has_team"
+                      name="has_team"
                       defaultValue={
-                        studentData.application.hasTeam ? "yes" : "no"
+                        studentData.application.has_team ? "yes" : "no"
                       }
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                       required
@@ -482,7 +484,7 @@ export default function ParticipantApplication() {
 
                   <div>
                     <label
-                      htmlFor="dietary"
+                      htmlFor="dietary_restrictions"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
                       Dietary Restrictions *
@@ -500,9 +502,9 @@ export default function ParticipantApplication() {
                           <input
                             type="checkbox"
                             id={option.toLowerCase()}
-                            name="dietary"
+                            name="dietary_restrictions"
                             value={option.toLowerCase()}
-                            defaultChecked={studentData.application.dietaryRestrictions?.includes(
+                            defaultChecked={studentData.application.dietary_restrictions?.includes(
                               option.toLowerCase()
                             )}
                             className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
@@ -528,18 +530,18 @@ export default function ParticipantApplication() {
 
                   <div>
                     <label
-                      htmlFor="development"
+                      htmlFor="development_goals"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
                       In what ways do you anticipate this Datathon contributing
                       to your professional or academic development? *
                     </label>
                     <textarea
-                      id="development"
-                      name="development"
+                      id="development_goals"
+                      name="development_goals"
                       rows={4}
                       defaultValue={
-                        studentData.application.developmentGoals || ""
+                        studentData.application.development_goals || ""
                       }
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                       required
@@ -548,16 +550,16 @@ export default function ParticipantApplication() {
 
                   <div>
                     <label
-                      htmlFor="github"
+                      htmlFor="github_url"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
                       Github/Portfolio URL *
                     </label>
                     <input
                       type="url"
-                      id="github"
-                      name="github"
-                      defaultValue={studentData.application.githubUrl || ""}
+                      id="github_url"
+                      name="github_url"
+                      defaultValue={studentData.application.github_url || ""}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                       required
                     />
@@ -565,16 +567,16 @@ export default function ParticipantApplication() {
 
                   <div>
                     <label
-                      htmlFor="linkedin"
+                      htmlFor="linkedin_url"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
                       LinkedIn URL *
                     </label>
                     <input
                       type="url"
-                      id="linkedin"
-                      name="linkedin"
-                      defaultValue={studentData.application.linkedinUrl || ""}
+                      id="linkedin_url"
+                      name="linkedin_url"
+                      defaultValue={studentData.application.linkedin_url || ""}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                       required
                     />
@@ -589,16 +591,16 @@ export default function ParticipantApplication() {
                     <div className="mt-2">
                       <input
                         type="checkbox"
-                        id="confirmation"
-                        name="confirmation"
+                        id="attendance_confirmed"
+                        name="attendance_confirmed"
                         defaultChecked={
-                          studentData.application.attendanceConfirmed || false
+                          studentData.application.attendance_confirmed || false
                         }
                         className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         required
                       />
                       <label
-                        htmlFor="confirmation"
+                        htmlFor="attendance_confirmed"
                         className="ml-2 text-sm text-gray-700 font-chillax"
                       >
                         Yes, I confirm

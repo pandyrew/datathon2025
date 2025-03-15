@@ -8,7 +8,7 @@ import {
   Book,
   ChevronRight,
 } from "lucide-react";
-import { getStudentWithDetails, getRating } from "@/app/lib/db/queries";
+import { getStudentByUserId, supabaseAdmin } from "@/app/lib/db/supabase";
 import RoleSelector from "@/app/components/applications/components/RoleSelector";
 import WithdrawalSection from "@/app/components/applications/components/WithdrawalSection";
 
@@ -17,15 +17,84 @@ export default async function DashboardPage() {
   if (!userId) redirect("/");
 
   console.log("userId", userId);
-  const studentData = await getStudentWithDetails(userId);
+
+  // Get the student record
+  const { data: student, error: studentError } = await getStudentByUserId(
+    userId
+  );
+
+  if (studentError || !student) {
+    console.error("Error fetching student:", studentError?.message);
+    redirect("/welcome");
+  }
+
+  // Get the appropriate application based on role
+  let application = null;
+  let team = null;
+
+  if (student.role === "participant") {
+    const { data: participantApp } = await supabaseAdmin
+      .from("participant_applications")
+      .select("*")
+      .eq("student_id", student.id)
+      .limit(1)
+      .single();
+
+    application = participantApp;
+  } else if (student.role === "judge") {
+    const { data: judgeApp } = await supabaseAdmin
+      .from("judge_applications")
+      .select("*")
+      .eq("student_id", student.id)
+      .limit(1)
+      .single();
+
+    application = judgeApp;
+  } else if (student.role === "mentor") {
+    const { data: mentorApp } = await supabaseAdmin
+      .from("mentor_applications")
+      .select("*")
+      .eq("student_id", student.id)
+      .limit(1)
+      .single();
+
+    application = mentorApp;
+  }
+
+  // Get team if exists
+  if (student.team_id) {
+    const { data: teamData } = await supabaseAdmin
+      .from("teams")
+      .select("*")
+      .eq("id", student.team_id)
+      .limit(1)
+      .single();
+
+    team = teamData;
+  }
+
+  const studentData = {
+    student,
+    application,
+    team,
+  };
+
   const currentRole = studentData?.student.role || "participant";
 
   type Role = "participant" | "mentor" | "coordinator" | "judge";
 
   // Get the review status if there's an application
-  const hasReview = studentData?.application?.id
-    ? await getRating(studentData.application.id)
-    : null;
+  let hasReview = null;
+  if (application?.id) {
+    const { data: ratings } = await supabaseAdmin
+      .from("ratings")
+      .select("*")
+      .eq("application_id", application.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    hasReview = ratings && ratings.length > 0 ? ratings[0] : null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,8 +107,8 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-2 text-gray-600 font-chillax">
               Welcome to your Datathon dashboard,{" "}
-              {studentData?.application?.fullName ||
-                studentData?.student.firstName}
+              {studentData?.application?.full_name ||
+                `${studentData?.student.first_name} ${studentData?.student.last_name}`}
             </p>
             {studentData?.application?.id && (
               <p className="text-gray-500 font-chillax text-sm">

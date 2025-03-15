@@ -10,8 +10,8 @@ import DashboardLoading from "./loading";
 type StudentData = {
   student: {
     id: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     role: string;
     email: string;
   };

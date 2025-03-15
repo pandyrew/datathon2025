@@ -1,55 +1,48 @@
 "use server";
 
-import { getConnection } from "./db/drizzle";
-import { eq } from "drizzle-orm";
-import {
-  participantApplications,
-  judgeApplications,
-  students,
-  mentorApplications,
-} from "./db/schema";
+import { supabaseAdmin } from "./db/supabase";
 
 type ParticipantStepData = {
   personal: {
-    fullName: string;
+    full_name: string;
     gender: string;
     pronouns: string;
     university: string;
     major: string;
-    educationLevel: string;
+    education_level: string;
   };
   experience: {
-    isFirstDatathon: boolean;
-    comfortLevel: number;
-    hasTeam: boolean;
+    is_first_datathon: boolean;
+    comfort_level: number;
+    has_team: boolean;
     teammates: string;
-    dietaryRestrictions: string;
+    dietary_restrictions: string;
   };
   final: {
-    developmentGoals: string;
-    githubUrl: string;
-    linkedinUrl: string;
-    attendanceConfirmed: boolean;
+    development_goals: string;
+    github_url: string;
+    linkedin_url: string;
+    attendance_confirmed: boolean;
     feedback?: string;
   };
 };
 
 type JudgeStepData = {
   basic: {
-    fullName: string;
+    full_name: string;
     pronouns: string;
     affiliation: string;
   };
   experience: {
     experience: string;
     motivation: string;
-    feedbackComfort: number;
+    feedback_comfort: number;
     availability: boolean;
   };
   links: {
-    linkedinUrl: string;
-    githubUrl: string;
-    websiteUrl?: string;
+    linkedin_url: string;
+    github_url: string;
+    website_url?: string;
     feedback?: string;
   };
 };
@@ -86,23 +79,30 @@ export async function updateApplicationData(
   data: FormData
 ) {
   try {
-    const db = await getConnection();
-
     // First determine the role by checking which application exists
-    const participantApp = await db
-      .select()
-      .from(participantApplications)
-      .where(eq(participantApplications.id, applicationId))
+    const { data: participantApp } = await supabaseAdmin
+      .from("participant_applications")
+      .select("*")
+      .eq("id", applicationId)
+      .limit(1)
+      .single();
+
+    const { data: mentorApp } = await supabaseAdmin
+      .from("mentor_applications")
+      .select("*")
+      .eq("id", applicationId)
       .limit(1);
 
-    const mentorApp = await db
-      .select()
-      .from(mentorApplications)
-      .where(eq(mentorApplications.id, applicationId))
+    const { data: judgeApp } = await supabaseAdmin
+      .from("judge_applications")
+      .select("*")
+      .eq("id", applicationId)
       .limit(1);
 
-    const isParticipant = participantApp.length > 0;
-    const isMentor = mentorApp.length > 0;
+    const isParticipant = !!participantApp;
+    const isMentor = mentorApp && mentorApp.length > 0;
+    const isJudge = judgeApp && judgeApp.length > 0;
+
     let updateData: Record<string, string | number | boolean | string[]> = {};
 
     if (isParticipant) {
@@ -112,46 +112,50 @@ export async function updateApplicationData(
       switch (stepKey) {
         case "personal":
           updateData = {
-            fullName: data.get("fullName") as string,
+            full_name: data.get("full_name") as string,
             gender: data.get("gender") as string,
             pronouns: data.get("pronouns") as string,
-            pronounsOther: data.get("pronounsOther") as string,
+            pronouns_other: data.get("pronouns_other") as string,
             university: data.get("university") as string,
             major: data.get("major") as string,
-            educationLevel: data.get("year") as string,
+            education_level: data.get("education_level") as string,
           };
           break;
 
         case "experience":
           updateData = {
-            isFirstDatathon: data.get("firstTime") === "yes",
-            comfortLevel: Number(data.get("comfort")),
-            hasTeam: data.get("team") === "yes",
+            is_first_datathon: data.get("is_first_datathon") === "yes",
+            comfort_level: Number(data.get("comfort_level")),
+            has_team: data.get("has_team") === "yes",
             teammates: data.get("teammates") as string,
-            dietaryRestrictions: Array.from(data.getAll("dietary")).join(", "),
+            dietary_restrictions: Array.from(
+              data.getAll("dietary_restrictions")
+            ).join(", "),
           };
           break;
 
         case "final":
           updateData = {
-            developmentGoals: data.get("development") as string,
-            githubUrl: data.get("github") as string,
-            linkedinUrl: data.get("linkedin") as string,
-            attendanceConfirmed: data.get("confirmation") === "on",
+            development_goals: data.get("development_goals") as string,
+            github_url: data.get("github_url") as string,
+            linkedin_url: data.get("linkedin_url") as string,
+            attendance_confirmed: data.get("attendance_confirmed") === "on",
             feedback: data.get("feedback") as string,
           };
           break;
       }
 
-      const [updated] = await db
-        .update(participantApplications)
-        .set({
+      const { data: updated, error } = await supabaseAdmin
+        .from("participant_applications")
+        .update({
           ...updateData,
-          updatedAt: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .where(eq(participantApplications.id, applicationId))
-        .returning();
+        .eq("id", applicationId)
+        .select()
+        .single();
 
+      if (error) throw error;
       return { success: true, data: updated };
     } else if (isMentor) {
       const stepNumber = parseInt(step);
@@ -160,48 +164,54 @@ export async function updateApplicationData(
       switch (stepKey) {
         case "1":
           updateData = {
-            fullName: data.get("fullName") as string,
+            full_name: data.get("full_name") as string,
             pronouns: data.get("pronouns") as string,
-            pronounsOther: data.get("pronounsOther") as string,
+            pronouns_other: data.get("pronouns_other") as string,
             affiliation: data.get("affiliation") as string,
           };
           break;
 
         case "2":
           updateData = {
-            programmingLanguages: data.getAll(
-              "programmingLanguages"
+            programming_languages: data.getAll(
+              "programming_languages"
             ) as string[],
-            comfortLevel: Number(data.get("comfortLevel")),
-            hasHackathonExperience:
-              data.get("hasHackathonExperience") === "true",
+            comfort_level: Number(data.get("comfort_level")),
+            has_hackathon_experience:
+              data.get("has_hackathon_experience") === "true",
             motivation: data.get("motivation") as string,
-            mentorRoleDescription: data.get("mentorRoleDescription") as string,
+            mentor_role_description: data.get(
+              "mentor_role_description"
+            ) as string,
             availability: data.get("availability") as string,
           };
           break;
 
         case "3":
           updateData = {
-            linkedinUrl: data.get("linkedin") as string,
-            githubUrl: data.get("github") as string,
-            websiteUrl: data.get("website") as string,
-            dietaryRestrictions: data.getAll("dietaryRestrictions") as string[],
+            linkedin_url: data.get("linkedin_url") as string,
+            github_url: data.get("github_url") as string,
+            website_url: data.get("website_url") as string,
+            dietary_restrictions: data.getAll(
+              "dietary_restrictions"
+            ) as string[],
           };
           break;
       }
 
-      const [updated] = await db
-        .update(mentorApplications)
-        .set({
+      const { data: updated, error } = await supabaseAdmin
+        .from("mentor_applications")
+        .update({
           ...updateData,
-          updatedAt: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .where(eq(mentorApplications.id, applicationId))
-        .returning();
+        .eq("id", applicationId)
+        .select()
+        .single();
 
+      if (error) throw error;
       return { success: true, data: updated };
-    } else {
+    } else if (isJudge) {
       // Judge application
       const stepNumber = parseInt(step);
       const stepKey = getJudgeStepKey(stepNumber);
@@ -209,9 +219,9 @@ export async function updateApplicationData(
       switch (stepKey) {
         case "basic":
           updateData = {
-            fullName: data.get("fullName") as string,
+            full_name: data.get("full_name") as string,
             pronouns: data.get("pronouns") as string,
-            pronounsOther: data.get("pronounsOther") as string,
+            pronouns_other: data.get("pronouns_other") as string,
             affiliation: data.get("affiliation") as string,
           };
           break;
@@ -220,32 +230,39 @@ export async function updateApplicationData(
           updateData = {
             experience: data.get("experience") as string,
             motivation: data.get("motivation") as string,
-            feedbackComfort: Number(data.get("feedbackComfort")),
+            feedback_comfort: Number(data.get("feedback_comfort")),
             availability: data.get("availability") === "on",
           };
           break;
 
         case "links":
           updateData = {
-            linkedinUrl: data.get("linkedin") as string,
-            githubUrl: data.get("github") as string,
-            websiteUrl: data.get("website") as string,
+            linkedin_url: data.get("linkedin_url") as string,
+            github_url: data.get("github_url") as string,
+            website_url: data.get("website_url") as string,
             feedback: data.get("feedback") as string,
           };
           break;
       }
 
-      const [updated] = await db
-        .update(judgeApplications)
-        .set({
+      const { data: updated, error } = await supabaseAdmin
+        .from("judge_applications")
+        .update({
           ...updateData,
-          updatedAt: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .where(eq(judgeApplications.id, applicationId))
-        .returning();
+        .eq("id", applicationId)
+        .select()
+        .single();
 
+      if (error) throw error;
       return { success: true, data: updated };
     }
+
+    return {
+      success: false,
+      error: "Application not found",
+    };
   } catch (error) {
     console.error("Error updating application:", error);
     return {
@@ -259,16 +276,15 @@ export async function submitApplication(studentId: string) {
   console.log("Submitting application for student:", studentId);
 
   try {
-    const db = await getConnection();
-
     // First get the student to determine role
-    const [student] = await db
-      .select()
-      .from(students)
-      .where(eq(students.id, studentId))
-      .limit(1);
+    const { data: student, error: studentError } = await supabaseAdmin
+      .from("students")
+      .select("*")
+      .eq("id", studentId)
+      .limit(1)
+      .single();
 
-    if (!student) {
+    if (studentError || !student) {
       return {
         success: false,
         error: "Student not found",
@@ -277,36 +293,43 @@ export async function submitApplication(studentId: string) {
 
     // Update the appropriate application based on role
     if (student.role === "participant") {
-      const [updated] = await db
-        .update(participantApplications)
-        .set({
+      const { data: updated, error } = await supabaseAdmin
+        .from("participant_applications")
+        .update({
           status: "submitted",
-          updatedAt: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .where(eq(participantApplications.studentId, studentId))
-        .returning();
+        .eq("student_id", studentId)
+        .select()
+        .single();
 
+      if (error) throw error;
       return { success: true, data: updated };
     } else if (student.role === "judge") {
-      const [updated] = await db
-        .update(judgeApplications)
-        .set({
+      const { data: updated, error } = await supabaseAdmin
+        .from("judge_applications")
+        .update({
           status: "submitted",
-          updatedAt: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .where(eq(judgeApplications.studentId, studentId))
-        .returning();
+        .eq("student_id", studentId)
+        .select()
+        .single();
 
+      if (error) throw error;
       return { success: true, data: updated };
     } else if (student.role === "mentor") {
-      const [updated] = await db
-        .update(mentorApplications)
-        .set({
+      const { data: updated, error } = await supabaseAdmin
+        .from("mentor_applications")
+        .update({
           status: "submitted",
-          updatedAt: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .where(eq(mentorApplications.studentId, studentId))
-        .returning();
+        .eq("student_id", studentId)
+        .select()
+        .single();
+
+      if (error) throw error;
       return { success: true, data: updated };
     }
 

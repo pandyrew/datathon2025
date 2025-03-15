@@ -1,13 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getConnection } from "@/app/lib/db/drizzle";
-import {
-  participantApplications,
-  judgeApplications,
-  students,
-  mentorApplications,
-} from "@/app/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { supabaseAdmin, getStudentByUserId } from "@/app/lib/db/supabase";
 
 export async function GET() {
   const { userId } = await auth();
@@ -16,46 +9,69 @@ export async function GET() {
   }
 
   try {
-    const db = await getConnection();
-
     // First get the student record
-    const student = await db
-      .select()
-      .from(students)
-      .where(eq(students.userId, userId))
-      .limit(1);
+    const { data: student, error: studentError } = await getStudentByUserId(
+      userId
+    );
 
-    if (!student.length) {
-      return NextResponse.json({ hasApplication: false, applicationStatus: null });
+    if (studentError || !student) {
+      console.error("Error fetching student:", studentError?.message);
+      return NextResponse.json({
+        hasApplication: false,
+        applicationStatus: null,
+      });
     }
 
-    const studentId = student[0].id;
+    const studentId = student.id;
 
-    // Check applications and their status
-    const participantApp = await db
-      .select({ id: participantApplications.id, status: participantApplications.status })
-      .from(participantApplications)
-      .where(eq(participantApplications.studentId, studentId))
-      .limit(1);
+    // Check participant application
+    const { data: participantApp, error: participantError } =
+      await supabaseAdmin
+        .from("participant_applications")
+        .select("id, status")
+        .eq("student_id", studentId)
+        .limit(1)
+        .single();
 
-    const judgeApp = await db
-      .select({ id: judgeApplications.id, status: judgeApplications.status })
-      .from(judgeApplications)
-      .where(eq(judgeApplications.studentId, studentId))
-      .limit(1);
+    if (participantError && participantError.code !== "PGRST116") {
+      // PGRST116 is the error code for "no rows returned"
+      console.error(
+        "Error checking participant application:",
+        participantError.message
+      );
+    }
 
-    const mentorApp = await db
-      .select({ id: mentorApplications.id, status: mentorApplications.status })
-      .from(mentorApplications)
-      .where(eq(mentorApplications.studentId, studentId))
-      .limit(1);
+    // Check judge application
+    const { data: judgeApp, error: judgeError } = await supabaseAdmin
+      .from("judge_applications")
+      .select("id, status")
+      .eq("student_id", studentId)
+      .limit(1)
+      .single();
 
-    const application = participantApp[0] || judgeApp[0] || mentorApp[0];
+    if (judgeError && judgeError.code !== "PGRST116") {
+      console.error("Error checking judge application:", judgeError.message);
+    }
+
+    // Check mentor application
+    const { data: mentorApp, error: mentorError } = await supabaseAdmin
+      .from("mentor_applications")
+      .select("id, status")
+      .eq("student_id", studentId)
+      .limit(1)
+      .single();
+
+    if (mentorError && mentorError.code !== "PGRST116") {
+      console.error("Error checking mentor application:", mentorError.message);
+    }
+
+    // Find the first application that exists
+    const application = participantApp || judgeApp || mentorApp;
     const hasApplication = !!application;
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       hasApplication,
-      applicationStatus: application ? application.status : null 
+      applicationStatus: application ? application.status : null,
     });
   } catch (error) {
     console.error("Error checking application:", error);

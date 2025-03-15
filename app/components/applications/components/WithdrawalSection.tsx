@@ -1,8 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BaseApplication } from "@/app/lib/db/queries";
 import { useRouter } from "next/navigation";
+
+// Define a generic application type that works with Supabase
+interface BaseApplication {
+  id: string;
+  student_id: string;
+  status: string;
+  full_name?: string | null;
+  created_at: string;
+  updated_at: string;
+  [key: string]: any; // Allow for other properties
+}
 
 interface WithdrawalSectionProps {
   application: BaseApplication | null | undefined;

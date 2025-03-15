@@ -2,24 +2,24 @@ import { useUser } from "@clerk/nextjs";
 import { redirect, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { updateApplicationData, submitApplication } from "@/app/lib/actions";
-import LoadingSpinner from './components/LoadingSpinner';
+import LoadingSpinner from "./components/LoadingSpinner";
 
 type StudentData = {
   student: {
     id: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     role: string;
   };
   application: {
     id: string;
     status: string;
-    fullName?: string;
+    full_name?: string;
     university?: string;
     position?: string;
     experience?: string;
     availability?: string;
-    linkedinUrl?: string;
+    linkedin_url?: string;
     feedback?: string;
   };
 };
@@ -61,7 +61,9 @@ export default function CoordinatorApplication() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-medium text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">You must be a coordinator to access this application.</p>
+          <p className="mt-2 text-gray-600">
+            You must be a coordinator to access this application.
+          </p>
         </div>
       </div>
     );
@@ -105,16 +107,19 @@ export default function CoordinatorApplication() {
             >
               <div>
                 <label
-                  htmlFor="fullName"
+                  htmlFor="full_name"
                   className="block text-sm font-medium text-gray-700 font-chillax"
                 >
                   Full Name *
                 </label>
                 <input
                   type="text"
-                  id="fullName"
-                  name="fullName"
-                  defaultValue={studentData.application.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
+                  id="full_name"
+                  name="full_name"
+                  defaultValue={
+                    studentData.application.full_name ||
+                    `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                   required
                 />
@@ -192,16 +197,16 @@ export default function CoordinatorApplication() {
 
               <div>
                 <label
-                  htmlFor="linkedin"
+                  htmlFor="linkedin_url"
                   className="block text-sm font-medium text-gray-700 font-chillax"
                 >
                   LinkedIn URL *
                 </label>
                 <input
                   type="url"
-                  id="linkedin"
-                  name="linkedin"
-                  defaultValue={studentData.application.linkedinUrl || ""}
+                  id="linkedin_url"
+                  name="linkedin_url"
+                  defaultValue={studentData.application.linkedin_url || ""}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
                   required
                 />
@@ -237,4 +242,4 @@ export default function CoordinatorApplication() {
       </div>
     </div>
   );
-} 
+}

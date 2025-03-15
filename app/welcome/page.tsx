@@ -7,8 +7,8 @@ import { useState, useEffect } from "react";
 type StudentData = {
   student: {
     id: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     role: string;
   };
 };
@@ -67,10 +67,10 @@ export default function WelcomePage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            userId: user?.id,
+            user_id: user?.id,
             email: user?.emailAddresses[0]?.emailAddress,
-            firstName: user?.firstName || "",
-            lastName: user?.lastName || "",
+            first_name: user?.firstName || "",
+            last_name: user?.lastName || "",
           }),
         });
         if (!createResponse.ok) {

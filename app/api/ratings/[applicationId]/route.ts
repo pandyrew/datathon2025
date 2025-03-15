@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRating } from "@/app/lib/db/queries";
+import { supabaseAdmin } from "@/app/lib/db/supabase";
 import { auth } from "@clerk/nextjs/server";
 import { requireAdmin } from "@/app/lib/auth/adminCheck";
 
@@ -16,7 +16,24 @@ export async function GET(
     await requireAdmin(userId);
 
     const { applicationId } = await params;
-    const rating = await getRating(applicationId);
+
+    // Get the most recent rating for this application
+    const { data: ratings, error } = await supabaseAdmin
+      .from("ratings")
+      .select("*")
+      .eq("application_id", applicationId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("Error fetching rating:", error.message);
+      return NextResponse.json(
+        { error: "Failed to fetch rating" },
+        { status: 500 }
+      );
+    }
+
+    const rating = ratings && ratings.length > 0 ? ratings[0] : null;
     return NextResponse.json({ rating });
   } catch (error) {
     console.error("Error getting rating:", error);
