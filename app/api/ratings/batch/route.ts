@@ -41,7 +41,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // Process ratings to get the most recent one for each application
-    const latestRatings: Record<string, any> = {};
+    const latestRatings: Record<string, {
+      id: string;
+      application_id: string;
+      score: number;
+      feedback: string;
+      created_at: string;
+      user_id: string;
+      application_role: string;
+    }> = {};
 
     allRatings.forEach((rating) => {
       const appId = rating.application_id;
