@@ -28,7 +28,7 @@ const pool = new Pool({
 });
 
 // Helper function to execute queries with proper error handling
-async function executeQuery(queryText: string, params: any[] = []) {
+async function executeQuery(queryText: string, params: string[] = []) {
   const client = await pool.connect();
   try {
     // Disable prepared statements for transaction pooler

@@ -11,7 +11,7 @@ interface BaseApplication {
   full_name?: string | null;
   created_at: string;
   updated_at: string;
-  [key: string]: any; // Allow for other properties
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface WithdrawalSectionProps {

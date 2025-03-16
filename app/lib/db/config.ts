@@ -31,9 +31,12 @@ export async function createConnection() {
   // Add SSL options for Supabase connection
   const poolConfig = {
     connectionString,
-    ssl: process.env.DATABASE_URL?.includes("supabase")
-      ? { rejectUnauthorized: false }
-      : undefined,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 60000, // 60 seconds timeout
+    statement_timeout: 120000, // 120 seconds statement timeout
+    query_timeout: 120000, // 120 seconds query timeout
+    max: 5, // Limit number of connections for stability
+    idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
   };
 
   const pool = new Pool(poolConfig);

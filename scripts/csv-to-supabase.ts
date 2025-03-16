@@ -8,8 +8,8 @@ dotenv.config();
 
 const csvDir = path.join(process.cwd(), "csvs");
 
-function cleanRecord(record: any, table: string) {
-  const cleanedRecord: any = {};
+function cleanRecord(record: Record<string, unknown>) {
+  const cleanedRecord: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(record)) {
     // Handle empty strings for UUID fields
@@ -180,8 +180,8 @@ async function main() {
         );
 
         // Clean and transform the records
-        const cleanedRecords = records.map((record) =>
-          cleanRecord(record, table)
+        const cleanedRecords = records.map((record: Record<string, unknown>) =>
+          cleanRecord(record)
         );
 
         // For students table, we need to ensure all records have valid IDs

@@ -37,7 +37,7 @@ async function testSupabaseConnection() {
       if (error) {
         console.error(`Error accessing ${table} table:`, error.message);
       } else {
-        console.log(`✓ ${table} table accessible, count:`, data[0].count);
+        console.log(`✓ ${table} table accessible, count: ${data.length}`);
       }
     }
 
