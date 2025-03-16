@@ -147,6 +147,9 @@ export default function ApplicationSection({
                   }`}
                 >
                   <div className="flex items-center gap-2">
+                    <span className="font-outfit text-gray-500 w-8">
+                      {index + 1}.
+                    </span>
                     <p className="font-chillax text-gray-900 w-48">
                       {application.fullName}
                     </p>
