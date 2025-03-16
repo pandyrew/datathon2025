@@ -10,6 +10,7 @@ type ParticipantStepData = {
     university: string;
     major: string;
     education_level: string;
+    masters_program?: string;
   };
   experience: {
     is_first_datathon: boolean;
@@ -119,6 +120,7 @@ export async function updateApplicationData(
             university: data.get("university") as string,
             major: data.get("major") as string,
             education_level: data.get("education_level") as string,
+            masters_program: (data.get("masters_program") as string) || "",
           };
           break;
 
@@ -137,8 +139,8 @@ export async function updateApplicationData(
         case "final":
           updateData = {
             development_goals: data.get("development_goals") as string,
-            github_url: data.get("github_url") as string,
-            linkedin_url: data.get("linkedin_url") as string,
+            github_url: (data.get("github_url") as string) || "",
+            linkedin_url: (data.get("linkedin_url") as string) || "",
             attendance_confirmed: data.get("attendance_confirmed") === "on",
             feedback: data.get("feedback") as string,
           };

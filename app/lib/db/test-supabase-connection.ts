@@ -1,6 +1,6 @@
 import { config } from "dotenv";
-import { checkDatabaseConnection } from "./drizzle";
 import { supabase } from "./supabase";
+import { checkDatabaseConnection } from "./db-utils";
 
 // Load environment variables
 config();

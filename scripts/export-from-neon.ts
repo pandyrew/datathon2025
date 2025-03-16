@@ -3,8 +3,6 @@ import path from "path";
 import { parse } from "json2csv";
 import dotenv from "dotenv";
 import { Pool } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
-import * as schema from "../app/lib/db/schema";
 
 // Load Neon environment variables
 dotenv.config({ path: ".env.neon" });
@@ -32,19 +30,17 @@ async function exportTableToCsv(pool: Pool, tableName: string) {
       return;
     }
 
-    console.log(`Found ${rows.length} records in ${tableName}`);
-
-    const csv = parse(rows);
-
+    // Ensure output directory exists
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    const filePath = path.join(outputDir, `${tableName}.csv`);
-    fs.writeFileSync(filePath, csv);
+    const csv = parse(rows);
+    const outputPath = path.join(outputDir, `${tableName}.csv`);
+    fs.writeFileSync(outputPath, csv);
 
     console.log(
-      `Successfully exported ${rows.length} records from ${tableName} to ${filePath}`
+      `Exported ${rows.length} rows from ${tableName} to ${outputPath}`
     );
   } catch (error) {
     console.error(`Error exporting ${tableName}:`, error);
@@ -54,55 +50,7 @@ async function exportTableToCsv(pool: Pool, tableName: string) {
 async function main() {
   console.log("Starting Neon export process...");
 
-  // Try to use the same connection method as in the app
-  try {
-    // First try using the existing connection method from the app
-    const {
-      createConnection,
-      closeConnection,
-    } = require("../app/lib/db/drizzle");
-    console.log("Using app connection method...");
-
-    const db = await createConnection();
-
-    for (const table of tables) {
-      try {
-        console.log(`Exporting ${table} from Neon using app connection...`);
-
-        // Use drizzle to query the table
-        const result = await db.query[table].findMany();
-
-        if (!result || result.length === 0) {
-          console.log(`No data found in ${table}`);
-          continue;
-        }
-
-        const csv = parse(result);
-
-        if (!fs.existsSync(outputDir)) {
-          fs.mkdirSync(outputDir, { recursive: true });
-        }
-
-        const filePath = path.join(outputDir, `${table}.csv`);
-        fs.writeFileSync(filePath, csv);
-
-        console.log(
-          `Successfully exported ${result.length} records from ${table} to ${filePath}`
-        );
-      } catch (error) {
-        console.error(`Error exporting ${table} using app connection:`, error);
-      }
-    }
-
-    await closeConnection();
-    console.log("Export process completed!");
-    return;
-  } catch (error) {
-    console.error("Error using app connection method:", error);
-    console.log("Falling back to direct connection...");
-  }
-
-  // Fallback to direct connection
+  // Create a direct connection to Neon
   const neonConnectionString = process.env.DATABASE_URL;
 
   if (!neonConnectionString) {
@@ -110,32 +58,32 @@ async function main() {
     process.exit(1);
   }
 
+  let pool: Pool | null = null;
+
   try {
     // Try different SSL configurations
     const sslConfigs = [
-      { rejectUnauthorized: false },
-      { rejectUnauthorized: true },
-      undefined,
+      { ssl: { rejectUnauthorized: false } },
+      { ssl: true },
+      {},
     ];
-
-    let pool = null;
-    let connected = false;
 
     for (const sslConfig of sslConfigs) {
       try {
-        console.log(`Trying connection with SSL config:`, sslConfig);
         pool = new Pool({
           connectionString: neonConnectionString,
-          ssl: sslConfig,
+          ...sslConfig,
         });
 
         // Test the connection
         await pool.query("SELECT 1");
-        connected = true;
-        console.log("Connection successful!");
+        console.log("Connected to Neon database");
         break;
-      } catch (error) {
-        console.error(`Connection failed with SSL config:`, sslConfig, error);
+      } catch (err) {
+        console.log(
+          `Connection failed with SSL config: ${JSON.stringify(sslConfig)}`,
+          err
+        );
         if (pool) {
           await pool.end();
           pool = null;
@@ -143,24 +91,25 @@ async function main() {
       }
     }
 
-    if (!connected || !pool) {
+    if (!pool) {
       throw new Error(
         "Could not establish connection to Neon with any SSL configuration"
       );
     }
 
+    // Export each table
     for (const table of tables) {
       await exportTableToCsv(pool, table);
     }
 
-    await pool.end();
-    console.log("Export process completed!");
+    console.log("Export process completed successfully");
   } catch (error) {
-    console.error("Export failed:", error);
+    console.error("Error during export process:", error);
+  } finally {
+    if (pool) {
+      await pool.end();
+    }
   }
 }
 
-main().catch((error) => {
-  console.error("Export failed:", error);
-  process.exit(1);
-});
+main().catch(console.error);

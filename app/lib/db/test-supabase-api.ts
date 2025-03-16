@@ -1,6 +1,6 @@
 import { config } from "dotenv";
-import { checkDatabaseConnection } from "./drizzle";
 import { supabaseAdmin } from "./supabase";
+import { checkDatabaseConnection } from "./db-utils";
 import { v4 as uuidv4 } from "uuid";
 
 // Load environment variables

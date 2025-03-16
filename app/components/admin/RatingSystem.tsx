@@ -5,11 +5,13 @@ import { useState, useEffect } from "react";
 interface RatingSystemProps {
   applicationId: string;
   applicationRole: string;
+  onRatingUpdated?: () => void;
 }
 
 export default function RatingSystem({
   applicationId,
   applicationRole,
+  onRatingUpdated,
 }: RatingSystemProps) {
   const [rating, setRating] = useState<string>("");
   const [feedback, setFeedback] = useState<string>("");
@@ -49,6 +51,11 @@ export default function RatingSystem({
       if (!response.ok) throw new Error("Failed to save rating");
 
       alert("Rating saved successfully!");
+
+      // Call the callback if provided
+      if (onRatingUpdated) {
+        onRatingUpdated();
+      }
     } catch (error) {
       console.error("Error saving rating:", error);
       alert("Failed to save rating");

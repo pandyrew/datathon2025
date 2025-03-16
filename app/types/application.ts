@@ -34,6 +34,7 @@ export interface ParticipantApplication extends BaseApplication {
   comfortLevel: number;
   hasTeam: boolean;
   developmentGoals: string;
+  mastersProgram?: string;
 }
 
 export interface MentorApplication extends BaseApplication {
@@ -53,3 +54,20 @@ export type Application =
   | ParticipantApplication
   | MentorApplication
   | JudgeApplication;
+
+// Type guard to check if an application is a ParticipantApplication
+export function isParticipantApplication(
+  application: Application
+): application is ParticipantApplication {
+  return "isFirstDatathon" in application;
+}
+
+// Helper function to safely access mastersProgram
+export function getMastersProgram(
+  application: Application
+): string | undefined {
+  if (isParticipantApplication(application)) {
+    return application.mastersProgram;
+  }
+  return undefined;
+}

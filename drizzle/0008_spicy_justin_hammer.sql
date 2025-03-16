@@ -1,1 +1,0 @@
-ALTER TABLE "ratings" ADD COLUMN "application_type" varchar(20) NOT NULL;

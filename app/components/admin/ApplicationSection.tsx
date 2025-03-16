@@ -6,6 +6,7 @@ import {
   Application,
   ApplicationType,
   ApplicationStatus,
+  isParticipantApplication,
 } from "@/app/types/application";
 import { useEffect, useState } from "react";
 
@@ -32,6 +33,50 @@ const ACCEPTANCE_THRESHOLDS: Record<
   judge: 20,
 };
 
+// Define colors for different masters programs
+const MASTERS_PROGRAM_COLORS: Record<
+  string,
+  { bg: string; text: string; border: string; bgHover: string }
+> = {
+  MSBA: {
+    bg: "bg-blue-50",
+    text: "text-blue-800",
+    border: "border-blue-200",
+    bgHover: "hover:bg-blue-100",
+  },
+  MFin: {
+    bg: "bg-green-50",
+    text: "text-green-800",
+    border: "border-green-200",
+    bgHover: "hover:bg-green-100",
+  },
+  MPAc: {
+    bg: "bg-amber-50",
+    text: "text-amber-800",
+    border: "border-amber-200",
+    bgHover: "hover:bg-amber-100",
+  },
+  MIE: {
+    bg: "bg-rose-50",
+    text: "text-rose-800",
+    border: "border-rose-200",
+    bgHover: "hover:bg-rose-100",
+  },
+  // Default purple for any other masters program
+  default: {
+    bg: "bg-purple-50",
+    text: "text-purple-800",
+    border: "border-purple-200",
+    bgHover: "hover:bg-purple-100",
+  },
+};
+
+// Helper function to get colors for a masters program
+function getMastersProgramColors(program: string | undefined) {
+  if (!program) return MASTERS_PROGRAM_COLORS.default;
+  return MASTERS_PROGRAM_COLORS[program] || MASTERS_PROGRAM_COLORS.default;
+}
+
 export default function ApplicationSection({
   title,
   description,
@@ -43,29 +88,33 @@ export default function ApplicationSection({
   // Fetch ratings for all applications
   useEffect(() => {
     const fetchRatings = async () => {
-      const ratingPromises = applications.map(async (app) => {
-        try {
-          const response = await fetch(`/api/ratings/${app.id}`);
-          if (response.ok) {
-            const data = await response.json();
-            return { id: app.id, rating: data.rating };
-          }
-        } catch (error) {
-          console.error("Error fetching rating:", error);
+      try {
+        // Get all application IDs
+        const applicationIds = applications.map((app) => app.id);
+
+        // Use the batch endpoint to fetch all ratings at once
+        const response = await fetch("/api/ratings/batch", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ applicationIds }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setRatings(data.ratings || {});
+        } else {
+          console.error("Error fetching ratings:", await response.text());
         }
-        return { id: app.id, rating: null };
-      });
-
-      const results = await Promise.all(ratingPromises);
-      const ratingsMap = results.reduce((acc, { id, rating }) => {
-        if (rating) acc[id] = rating;
-        return acc;
-      }, {} as Record<string, Rating>);
-
-      setRatings(ratingsMap);
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
+      }
     };
 
-    fetchRatings();
+    if (applications.length > 0) {
+      fetchRatings();
+    }
   }, [applications]);
 
   // Calculate statistics
@@ -80,12 +129,26 @@ export default function ApplicationSection({
     (app) => app.status === ApplicationStatus.REJECTED
   ).length;
 
+  // Count masters program applications
+  const mastersApplications = applications.filter(
+    (app) => isParticipantApplication(app) && app.mastersProgram
+  ).length;
+
   // Get threshold for current application type
   const threshold = type === "coordinator" ? 0 : ACCEPTANCE_THRESHOLDS[type];
   const spotsRemaining = Math.max(0, threshold - acceptedApplications);
 
-  // Sort applications by rating (highest first, unrated last)
+  // Sort applications by masters program first, then by rating
   const sortedApplications = [...applications].sort((a, b) => {
+    // First check for masters program (only for participant applications)
+    const hasMastersA = isParticipantApplication(a) && !!a.mastersProgram;
+    const hasMastersB = isParticipantApplication(b) && !!b.mastersProgram;
+
+    // If one has masters and the other doesn't, prioritize the one with masters
+    if (hasMastersA && !hasMastersB) return -1;
+    if (!hasMastersA && hasMastersB) return 1;
+
+    // If both have masters or both don't, sort by rating
     const ratingA = ratings[a.id]?.score;
     const ratingB = ratings[b.id]?.score;
 
@@ -105,7 +168,7 @@ export default function ApplicationSection({
         <p className="text-gray-600 font-chillax mb-6">{description}</p>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-6 gap-4 mb-6">
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600 font-chillax">Total</p>
             <p className="text-2xl font-outfit">{totalApplications}</p>
@@ -126,6 +189,12 @@ export default function ApplicationSection({
             <p className="text-sm text-blue-600 font-chillax">Spots Left</p>
             <p className="text-2xl font-outfit">{spotsRemaining}</p>
           </div>
+          {type === "participant" && (
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-sm text-purple-600 font-chillax">Masters</p>
+              <p className="text-2xl font-outfit">{mastersApplications}</p>
+            </div>
+          )}
         </div>
 
         {/* Threshold Warning */}
@@ -142,8 +211,21 @@ export default function ApplicationSection({
                 <Link
                   href={`/dashboard/admin/applications/${type}/${application.id}`}
                   key={index}
-                  className={`flex items-center justify-between px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors ${
-                    isWithinThreshold ? "bg-green-50" : "bg-gray-50"
+                  className={`flex items-center justify-between px-4 py-2 rounded-lg transition-colors ${
+                    isParticipantApplication(application) &&
+                    application.mastersProgram
+                      ? `${
+                          getMastersProgramColors(application.mastersProgram).bg
+                        } border ${
+                          getMastersProgramColors(application.mastersProgram)
+                            .border
+                        } ${
+                          getMastersProgramColors(application.mastersProgram)
+                            .bgHover
+                        }`
+                      : isWithinThreshold
+                      ? "bg-green-50 hover:bg-green-100"
+                      : "bg-gray-50 hover:bg-gray-100"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -152,6 +234,27 @@ export default function ApplicationSection({
                     </span>
                     <p className="font-chillax text-gray-900 w-48">
                       {application.fullName}
+                      {isParticipantApplication(application) &&
+                        application.mastersProgram && (
+                          <span
+                            className={`ml-2 px-2 py-0.5 ${
+                              getMastersProgramColors(
+                                application.mastersProgram
+                              ).bg
+                            } ${
+                              getMastersProgramColors(
+                                application.mastersProgram
+                              ).text
+                            } text-xs rounded-full font-bold border ${
+                              getMastersProgramColors(
+                                application.mastersProgram
+                              ).border
+                            }`}
+                            title={`Masters Program: ${application.mastersProgram}`}
+                          >
+                            {application.mastersProgram}
+                          </span>
+                        )}
                     </p>
                     <p className="text-sm text-gray-500 font-chillax w-64">
                       {application.email}

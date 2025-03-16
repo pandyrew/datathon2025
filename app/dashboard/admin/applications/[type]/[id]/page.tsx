@@ -11,15 +11,29 @@ import {
   JudgeApplication,
   MentorApplication,
 } from "@/app/types/application";
-import RatingSystem from "@/app/components/admin/RatingSystem";
+import RatingWrapper from "@/app/components/admin/RatingWrapper";
 
 function ApplicationRow({ label, value }: { label: string; value: unknown }) {
+  const isMastersProgram = label === "Masters Program" && value;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 py-4 px-4 border-b border-gray-200 hover:bg-gray-50">
-      <div className="sm:col-span-1 font-medium text-gray-500 pb-1 sm:mb-0 font-outfit">
+    <div
+      className={`grid grid-cols-1 sm:grid-cols-3 py-4 px-4 border-b border-gray-200 hover:bg-gray-50 ${
+        isMastersProgram ? "bg-purple-50" : ""
+      }`}
+    >
+      <div
+        className={`sm:col-span-1 font-medium pb-1 sm:mb-0 font-outfit ${
+          isMastersProgram ? "text-purple-700" : "text-gray-500"
+        }`}
+      >
         {label}
       </div>
-      <div className="sm:col-span-2 text-gray-900 font-outfit">
+      <div
+        className={`sm:col-span-2 font-outfit ${
+          isMastersProgram ? "text-purple-900 font-semibold" : "text-gray-900"
+        }`}
+      >
         {typeof value === "boolean"
           ? value
             ? "Yes"
@@ -49,6 +63,7 @@ function ApplicationDetails({
       // Fields specific to ParticipantApplication
       return [
         ...commonFields,
+        "mastersProgram",
         "developmentGoals",
         "comfortLevel",
         "isFirstDatathon",
@@ -77,6 +92,7 @@ function ApplicationDetails({
     comfortLevel: "Technical Comfort Level",
     hasTeam: "Has Team",
     educationLevel: "Year of Study",
+    mastersProgram: "Masters Program",
     attendanceConfirmed: "Attendance Confirmed",
     dietaryRestrictions: "Dietary Restrictions",
     developmentGoals: "Development Goals",
@@ -198,7 +214,7 @@ export default async function ApplicationDetailPage({
             <ApplicationDetails application={transformedApplication} />
           )}
 
-          <RatingSystem
+          <RatingWrapper
             applicationId={transformedApplication.id}
             applicationRole={resolvedParams.type}
           />

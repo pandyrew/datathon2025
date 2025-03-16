@@ -24,6 +24,7 @@ type StudentData = {
     university?: string;
     major?: string;
     education_level?: string;
+    masters_program?: string;
     is_first_datathon?: boolean;
     comfort_level?: number;
     has_team?: boolean;
@@ -385,6 +386,33 @@ export default function ParticipantApplication() {
                         <option value="graduate">Graduate Student</option>
                       </select>
                     </div>
+
+                    <div>
+                      <label
+                        htmlFor="masters_program"
+                        className="block text-sm font-medium text-gray-700 font-chillax"
+                      >
+                        Masters Program (if applicable)
+                      </label>
+                      <select
+                        id="masters_program"
+                        name="masters_program"
+                        defaultValue={
+                          studentData.application.masters_program || ""
+                        }
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
+                      >
+                        <option value="">Not applicable</option>
+                        <option value="MSBA">MSBA (Business Analytics)</option>
+                        <option value="MFin">MFin (Finance)</option>
+                        <option value="MPAc">
+                          MPAc (Professional Accountancy)
+                        </option>
+                        <option value="MIE">
+                          MIE (Innovation & Entrepreneurship)
+                        </option>
+                      </select>
+                    </div>
                   </div>
                 )
               )}
@@ -553,15 +581,16 @@ export default function ParticipantApplication() {
                       htmlFor="github_url"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
-                      Github/Portfolio URL *
+                      Github/Portfolio URL
                     </label>
                     <input
-                      type="url"
+                      type="text"
                       id="github_url"
                       name="github_url"
                       defaultValue={studentData.application.github_url || ""}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
+                      pattern="^$|^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$"
+                      placeholder="https://github.com/username (optional)"
                     />
                   </div>
 
@@ -570,15 +599,16 @@ export default function ParticipantApplication() {
                       htmlFor="linkedin_url"
                       className="block text-sm font-medium text-gray-700 font-chillax"
                     >
-                      LinkedIn URL *
+                      LinkedIn URL
                     </label>
                     <input
-                      type="url"
+                      type="text"
                       id="linkedin_url"
                       name="linkedin_url"
                       defaultValue={studentData.application.linkedin_url || ""}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-chillax"
-                      required
+                      pattern="^$|^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$"
+                      placeholder="https://linkedin.com/in/username (optional)"
                     />
                   </div>
 
