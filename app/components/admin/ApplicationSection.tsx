@@ -28,7 +28,7 @@ const ACCEPTANCE_THRESHOLDS: Record<
   Exclude<ApplicationType, "coordinator">,
   number
 > = {
-  participant: 140,
+  participant: 300,
   mentor: 30,
   judge: 20,
 };
