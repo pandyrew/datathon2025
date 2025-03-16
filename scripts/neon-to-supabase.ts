@@ -5,7 +5,18 @@ import fs from "fs";
 import path from "path";
 import { parse } from "json2csv";
 
-dotenv.config();
+// Load Neon environment variables
+dotenv.config({ path: ".env.neon" });
+
+// Neon connection
+const neonConnectionString = process.env.DATABASE_URL;
+
+// Now load Supabase environment variables
+dotenv.config({ path: ".env" });
+
+// Supabase connection
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
 
 const tables = [
   "students",
@@ -21,14 +32,17 @@ const outputDir = path.join(process.cwd(), "csvs");
 async function main() {
   console.log("Starting Neon to Supabase migration via CSV...");
 
-  const neonConnectionString = process.env.DATABASE_URL;
-  const supabaseUrl = process.env.SUPABASE_URL || "";
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
-
   if (!neonConnectionString) {
-    console.error("Missing Neon database URL. Please check your .env file.");
+    console.error(
+      "Missing Neon database URL. Please check your .env.neon file."
+    );
     process.exit(1);
   }
+
+  console.log(
+    "Using Neon connection string:",
+    neonConnectionString.replace(/:[^:]*@/, ":***@")
+  );
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error("Missing Supabase credentials. Please check your .env file.");

@@ -4,7 +4,8 @@ import { parse } from "csv-parse/sync";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
-dotenv.config();
+// Load Supabase environment variables
+dotenv.config({ path: ".env" });
 
 const csvDir = path.join(process.cwd(), "csvs");
 
@@ -40,7 +41,21 @@ function cleanRecord(record: Record<string, unknown>) {
     ) {
       cleanedRecord[key] = null;
     }
-    // Handle array fields that are stored as strings
+    // Handle array fields that are stored as JSON strings
+    else if (
+      value &&
+      typeof value === "string" &&
+      value.startsWith("[") &&
+      value.endsWith("]")
+    ) {
+      try {
+        cleanedRecord[key] = JSON.parse(value);
+      } catch (error) {
+        console.error(`Error parsing JSON array field ${key}:`, error);
+        cleanedRecord[key] = [];
+      }
+    }
+    // Handle array fields that are stored as PostgreSQL arrays
     else if (
       value &&
       typeof value === "string" &&
@@ -65,7 +80,7 @@ function cleanRecord(record: Record<string, unknown>) {
         }
       } catch (error) {
         console.error(`Error parsing array field ${key}:`, error);
-        cleanedRecord[key] = null;
+        cleanedRecord[key] = [];
       }
     }
     // Special handling for empty array strings

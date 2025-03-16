@@ -2,31 +2,28 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 import { Pool } from "pg";
 import dotenv from "dotenv";
-import { dbConnectionString } from "../../../drizzle.config";
 import { createClient } from "@supabase/supabase-js";
 
 // Load environment variables
 dotenv.config({ path: ".env" });
 
-const isDevelopment = process.env.NODE_ENV === "development";
-
 // Initialize Supabase client
 export const supabase = createClient(
+  process.env.SUPABASE_URL || "",
+  process.env.SUPABASE_ANON_KEY || ""
+);
+
+// Admin client for privileged operations
+export const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_KEY || ""
 );
 
 export async function createConnection() {
-  console.log(
-    `Creating ${
-      isDevelopment ? "development" : "production"
-    } database connection`
-  );
+  console.log("Creating database connection to Supabase");
 
-  // Use PostgreSQL connection for both environments
-  const connectionString = isDevelopment
-    ? dbConnectionString
-    : process.env.DATABASE_URL!;
+  // Use PostgreSQL connection with Supabase
+  const connectionString = process.env.DATABASE_URL!;
 
   // Add SSL options for Supabase connection
   const poolConfig = {

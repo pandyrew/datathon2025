@@ -6,7 +6,8 @@ import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "../app/lib/db/schema";
 
-dotenv.config();
+// Load Neon environment variables
+dotenv.config({ path: ".env.neon" });
 
 const tables = [
   "students",
@@ -30,6 +31,8 @@ async function exportTableToCsv(pool: Pool, tableName: string) {
       console.log(`No data found in ${tableName}`);
       return;
     }
+
+    console.log(`Found ${rows.length} records in ${tableName}`);
 
     const csv = parse(rows);
 

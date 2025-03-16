@@ -1,6 +1,5 @@
 import { Pool } from "pg";
 import dotenv from "dotenv";
-import { supabaseAdmin } from "./supabase";
 
 dotenv.config();
 
@@ -28,26 +27,8 @@ const pool = new Pool({
 async function testConnection() {
   try {
     console.log("Testing database connection...");
-
-    // Test Supabase connection
-    console.log("Testing Supabase connection...");
-    const { data: supabaseData, error: supabaseError } = await supabaseAdmin
-      .from("students")
-      .select("*")
-      .limit(1);
-
-    if (supabaseError) {
-      console.error("Error connecting to Supabase:", supabaseError);
-    } else {
-      console.log("Successfully connected to Supabase!");
-      console.log("Supabase data sample:", supabaseData);
-    }
-
-    // Test direct PostgreSQL connection
     const client = await pool.connect();
-    console.log(
-      "Successfully connected to the database via PostgreSQL client!"
-    );
+    console.log("Successfully connected to the database!");
 
     try {
       // Disable prepared statements for this query
