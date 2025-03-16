@@ -99,7 +99,10 @@ export default function Landing() {
         }}
       >
         <div className="flex flex-col items-center">
-          <div className="w-[300px] md:w-[600px]">
+          <div className="w-[300px] md:w-[600px] flex justify-between items-center">
+            <p className="text-left text-lg md:text-xl font-outfit tracking-wider ml-4">
+              Data @ UCI x MAC
+            </p>
             <p className="text-right text-lg md:text-xl font-outfit tracking-wider mr-4">
               APR 11 - APR 13
             </p>
