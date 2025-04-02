@@ -100,7 +100,7 @@ export default function WelcomeStep({
             <p>
               Application deadline:{" "}
               <span className="font-medium">
-                March 28th, 2025 (Friday) at 11:59 PM
+                April 4th, 2025 (Friday) at 11:59 PM
               </span>
             </p>
             <p className="mt-2">

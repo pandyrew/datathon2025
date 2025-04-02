@@ -84,7 +84,7 @@ export default function MentorWelcome({
           <div className="mt-6 text-gray-600">
             <p>
               Application deadline:{" "}
-              <span className="font-medium">Friday, March 28th</span>
+              <span className="font-medium">Friday, April 4th</span>
             </p>
             <p className="mt-2">
               If you have any questions, please feel free to email us at{" "}
