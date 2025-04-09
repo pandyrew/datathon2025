@@ -114,7 +114,7 @@ export default function Navbar() {
                 }`}
                 disabled
               >
-                COMING SOON
+                CLOSED
               </button>
             )}
           </SignedOut>

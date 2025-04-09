@@ -63,7 +63,7 @@ export default function Home() {
                 }`}
                 disabled
               >
-                COMING SOON
+                CLOSED
               </button>
             )}
           </SignedOut>
