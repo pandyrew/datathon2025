@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
-const dotenv = require("dotenv");
-const { createClient } = require("@supabase/supabase-js");
+import * as fs from "fs";
+import * as path from "path";
+import * as dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
 
@@ -15,6 +15,18 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const outputDir = path.join(process.cwd(), "emails");
+
+interface ParticipantApplication {
+  student_id: string;
+  status: string;
+}
+
+interface Student {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
 
 async function extractPendingApplicationEmails() {
   try {
@@ -38,7 +50,9 @@ async function extractPendingApplicationEmails() {
       return;
     }
 
-    const studentIds = participantApps.map((app) => app.student_id);
+    const studentIds = participantApps.map(
+      (app: ParticipantApplication) => app.student_id
+    );
     console.log(`Fetching email information for ${studentIds.length} students`);
 
     const { data: students, error: studentError } = await supabase
@@ -50,7 +64,7 @@ async function extractPendingApplicationEmails() {
       throw studentError;
     }
 
-    const studentsWithDraftApplications = students.map((student) => ({
+    const studentsWithDraftApplications = students.map((student: Student) => ({
       id: student.id,
       email: student.email,
       name: `${student.first_name} ${student.last_name}`.trim(),
