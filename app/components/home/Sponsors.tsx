@@ -26,6 +26,11 @@ const SPONSORS = [
     logo: "/sponsors/strata.png",
     url: "https://stratascratch.com"
   },
+  {
+    name: "OIT",
+    logo: "/sponsors/oit.png",
+    url: "https://www.oit.uci.edu/"
+  },
 ];
 
 
@@ -64,7 +69,7 @@ export default function Sponsors() {
               {/* <h3 className="text-2xl font-outfit font-light mb-12 text-gray-900">
                 Sponsors
               </h3> */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-12 justify-items-center">
                 {SPONSORS.map((sponsor, index) => (
                   <a
                     key={sponsor.name}
@@ -81,13 +86,18 @@ export default function Sponsors() {
                         delay: index * 0.1,
                         ease: [0.21, 0.47, 0.32, 0.98],
                       }}
-                      className="aspect-square relative flex items-center justify-center"
+                      className="min-w-[180px] aspect-square relative flex items-center justify-center"
                     >
                       <Image
                         src={sponsor.logo}
                         alt={sponsor.name}
                         fill
-                        className="object-contain"
+                        className={`object-contain ${
+                          sponsor.name === "Strata Scratch" ? "scale-[1.95]" :
+                          sponsor.name === "SPFB" ? "scale-[1.55]" :
+                          sponsor.name === "Merage" ? "scale-[1.55]" :
+                          sponsor.name === "Melissa Education" ? "scale-[1.55]" : ""
+                        }`}
                       />
                     </motion.div>
                   </a>
