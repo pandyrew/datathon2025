@@ -3,10 +3,37 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
+import Image from "next/image";
+
+const SPONSORS = [
+  {
+    name: "Melissa Education",
+    logo: "/sponsors/melissa_logo.png",
+    url: "https://www.melissa.com/education/"
+  },
+  {
+    name: "SPFB",
+    logo: "/sponsors/spfb.png",
+    url: "https://asuci.uci.edu/president/spfb/"
+  },
+  {
+    name: "Merage",
+    logo: "/sponsors/merage.png",
+    url: "https://merage.uci.edu"
+  },
+  {
+    name: "Strata Scratch",
+    logo: "/sponsors/strata.png",
+    url: "https://stratascratch.com"
+  },
+];
+
 
 export default function Sponsors() {
   const ref = useRef(null);
+  const logosRef = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const areLogosInView = useInView(logosRef, { once: true, margin: "-100px" });
 
   return (
     <section id="sponsors" className="min-h-[500px] bg-white py-32 px-6">
@@ -24,42 +51,49 @@ export default function Sponsors() {
 
           {/* Right side - Content */}
           <div className="space-y-24">
-            {/* Past Sponsors */}
-            {/* <motion.div
+            {/* Sponsors */}
+            <motion.div
               ref={logosRef}
-              initial={{ opacity: 0, y: 20 }}
-              animate={areLogosInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              initial={{ y: 20 }}
+              animate={areLogosInView ? { y: 0 } : { y: 20 }}
               transition={{
                 duration: 0.8,
                 ease: [0.21, 0.47, 0.32, 0.98],
               }}
             >
-              <h3 className="text-2xl font-outfit font-light mb-12 text-gray-900">
-                Past Sponsors
-              </h3>
+              {/* <h3 className="text-2xl font-outfit font-light mb-12 text-gray-900">
+                Sponsors
+              </h3> */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-                {PAST_SPONSORS.map((sponsor, index) => (
-                  <motion.div
+                {SPONSORS.map((sponsor, index) => (
+                  <a
                     key={sponsor.name}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={areLogosInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{
-                      duration: 0.5,
-                      delay: index * 0.1,
-                      ease: [0.21, 0.47, 0.32, 0.98],
-                    }}
-                    className="aspect-square relative bg-slate-50 p-6 flex items-center justify-center"
+                    href={sponsor.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block transition-transform duration-300 hover:scale-105"
                   >
-                    <Image
-                      src={sponsor.logo}
-                      alt={sponsor.name}
-                      fill
-                      className="object-contain p-4"
-                    />
-                  </motion.div>
+                    <motion.div
+                      initial={{ y: 20 }}
+                      animate={areLogosInView ? { y: 0 } : { y: 20 }}
+                      transition={{
+                        duration: 0.5,
+                        delay: index * 0.1,
+                        ease: [0.21, 0.47, 0.32, 0.98],
+                      }}
+                      className="aspect-square relative flex items-center justify-center"
+                    >
+                      <Image
+                        src={sponsor.logo}
+                        alt={sponsor.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </motion.div>
+                  </a>
                 ))}
               </div>
-            </motion.div> */}
+            </motion.div>
 
             {/* Sponsorship CTA */}
             <motion.div
