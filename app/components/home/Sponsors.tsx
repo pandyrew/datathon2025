@@ -9,30 +9,29 @@ const SPONSORS = [
   {
     name: "Melissa Education",
     logo: "/sponsors/melissa_logo.png",
-    url: "https://www.melissa.com/education/"
+    url: "https://www.melissa.com/education/",
   },
   {
     name: "SPFB",
     logo: "/sponsors/spfb.png",
-    url: "https://asuci.uci.edu/president/spfb/"
+    url: "https://asuci.uci.edu/president/spfb/",
   },
   {
     name: "Merage",
     logo: "/sponsors/merage.png",
-    url: "https://merage.uci.edu"
+    url: "https://merage.uci.edu",
   },
   {
     name: "Strata Scratch",
     logo: "/sponsors/strata.png",
-    url: "https://stratascratch.com"
+    url: "https://stratascratch.com",
   },
   {
     name: "OIT",
     logo: "/sponsors/oit.png",
-    url: "https://www.oit.uci.edu/"
+    url: "https://www.oit.uci.edu/",
   },
 ];
-
 
 export default function Sponsors() {
   const ref = useRef(null);
@@ -93,10 +92,15 @@ export default function Sponsors() {
                         alt={sponsor.name}
                         fill
                         className={`object-contain ${
-                          sponsor.name === "Strata Scratch" ? "scale-[1.95]" :
-                          sponsor.name === "SPFB" ? "scale-[1.55]" :
-                          sponsor.name === "Merage" ? "scale-[1.55]" :
-                          sponsor.name === "Melissa Education" ? "scale-[1.55]" : ""
+                          sponsor.name === "Strata Scratch"
+                            ? "scale-[1.95]"
+                            : sponsor.name === "SPFB"
+                            ? "scale-[1.55]"
+                            : sponsor.name === "Merage"
+                            ? "scale-[1.55]"
+                            : sponsor.name === "Melissa Education"
+                            ? "scale-[1.55]"
+                            : ""
                         }`}
                       />
                     </motion.div>
